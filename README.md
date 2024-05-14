@@ -1,11 +1,10 @@
 <p align="center">
-  <h1 align="center">GPTeam: Collaborative AI Agents</h1>
+  <h1 align="center">GPTeam: Collaborative AI Agents appropriation - fork for learning (elephant, lion and monkey AI fable)</h1>
   <p align="center">
     <img src="https://img.shields.io/github/stars/101dotxyz/gpteam.svg?style=for-the-badge&">
     <img src="https://img.shields.io/github/license/101dotxyz/gpteam.svg?style=for-the-badge&">
     <br /> 
-  <a href="https://www.gpteamai.com/ "><b>Web App</b></a>
-    |  
+    The original post explaning the solution
   <a href="https://blog.langchain.dev/gpteam-a-multi-agent-simulation/"><b>Blog Post</b></a>
   
   </p>
@@ -14,16 +13,11 @@
   </div>
 </p>
 
-## NEW! The GPTeam web app is here! ✨ 
-Try it out: https://www.gpteamai.com/ 
-
-
-
 ## About GPTeam
 
 GPTeam uses GPT-4 to create multiple agents who collaborate to achieve predefined goals. The main objective of this project is to explore the potential of GPT models in enhancing multi-agent productivity and effective communication.
 
-See a video demo here: https://www.youtube.com/watch?v=cIxhI1d6NsM
+Video demo of the AI fable: [https://www.youtube.com/watch?v=cIxhI1d6NsM](https://youtu.be/xIZlo0f8vic?t=2) 
 
 Read more about the architecture here: https://blog.langchain.dev/gpteam-a-multi-agent-simulation/
 
