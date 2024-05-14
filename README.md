@@ -6,7 +6,7 @@
   
   </p>
     <div align="center">
-    <img src="assets/5162819/1df30364-effc-484a-a552-be0301e27324"/>
+    ![image](https://github.com/anonette/GPTeam/assets/5162819/a4ae4a3b-83cb-4821-aa55-f84f5fee3530)
     </div>
 </p>
 
