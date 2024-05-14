@@ -41,8 +41,5 @@ DEFAULT_FAST_MODEL = (
 
 # Tools
 DISCORD_ENABLED = (
-    True
-    if os.getenv("ANNOUNCER_DISCORD_TOKEN", None) is not None
-    and len(os.getenv("ANNOUNCER_DISCORD_TOKEN")) > 0
-    else False
+    False
 )
