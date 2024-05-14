@@ -1,15 +1,13 @@
 <p align="center">
   <h1 align="center">GPTeam: Collaborative AI Agents appropriation - fork for learning (elephant, lion and monkey AI fable)</h1>
   <p align="center">
-    ![image](https://github.com/anonette/GPTeam/assets/5162819/1df30364-effc-484a-a552-be0301e27324)
-    <br /> 
-    The original post explaning the solution
+     The original post explaning the solution
   <a href="https://blog.langchain.dev/gpteam-a-multi-agent-simulation/"><b>Blog Post</b></a>
   
   </p>
     <div align="center">
-    <img src="assets/gpteam.png" alt="GPTeam" width="400" height="267" />
-  </div>
+    <img src="5162819/1df30364-effc-484a-a552-be0301e27324"/>
+    </div>
 </p>
 
 ## About GPTeam
