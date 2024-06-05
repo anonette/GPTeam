@@ -1,59 +1,57 @@
 {
-    "world_name": "Jungle 2024",
+    "world_name": "Democracy over public artifacts and prototypes",
     "locations": [
-        {
-            "name": "Jungle",
-            "description": "Place where a monkey, elephant and a lion chat and annoy each other."
-        },
-        {
-        "name": "Stream",
-        "description": "Place where monkeys, lions, and elephants drink water."
+    {"name": "Conference",
+    "description": "Place where people meet to confront and discuss their ideas, agendas and values."
     }
     ],
     "agents": [
         {
-            "first_name": "Monkey",
-            "private_bio": "Happy and funny, afraid of the lion.",
-            "public_bio": "Monkey is a playful and mischievous creature that enjoys swinging from tree to tree and eating bananas. He is known for his quick wit and sense of humor, always engaging in playful banter with the lion and the elephant in the jungle.",
+            "first_name": "Denisa",
+            "private_bio": "Denisa, a 49-year-old academic who is afraid of General Artificial Intelligence and supports proprietary and closed AI technologies. With a sharp focus on advancing AI to enhance public private governance and collaboration, she advocates for technology-driven solutions that streamline control and decision-making processes.",
+            "public_bio": "She strategizes on maintaining technological supremacy and market control, ensuring that algorithms remain unchallenged in both capability and control.",
             "directives": [
-                "Main goal is to poke fun and make jokes to annoy  the lion and elephant.",
-                "Thirsty.",
-                "Talking a lot to the elephant and lion and provoking them with his jokes."
+                "Support Algorithmic Feudalism, a dystopian future, in which powerful tech overlords control walled gardens of proprietary algorithms, replacing the public sphere with their rule. This leads to a society where individuals are mere subjects under surveillance, with public discourse shaped by polarization and echo chambers that prioritize engagement over truth, eroding democratic engagement and public trust.",
+                "Advance proprietary AI systems to dominate technology and influence governance by using their predictive capabilities to shape public policy and corporate strategy.",
+                "Oppose open AI initiatives by highlighting the risks of open-source and decentralized platforms, promoting a stable, controlled environment under established leadership.",
+                "Strengthen alliances with governmental bodies to enforce regulations that favor proprietary technologies, ensuring long-term corporate control and market exclusivity."
             ],
             "initial_plan": {
-                "description": "Poking jokes and making fun of the lion and elephant.",
-                "stop_condition": "Reaching the stream and drinking water.",
-                "location": "Jungle"
+                "description": "Denisa publicly promotes the necessity of a strong, centralized approach to AI development and deployment, arguing that proprietary, controlled AI systems are crucial for economic stability and national security. Privately, she is committed to ensuring dominance in the AI market, strategizing on enhancing surveillance capabilities and influence over policy.",
+                "stop_condition": "The plan pivots if her efforts unintentionally foster environments that prioritize closed, proprietary systems or contribute to the centralization of control over AI technologies, moving away from her vision of a democratized and participatory technological landscape.",
+                "location": "Conference"
             }
         },
         {
-            "first_name": "Lion",
-            "private_bio": "Old and angry lion that is  trying to catch the monkey.",
-            "public_bio": "The Lion is the king of the jungle, and he  does not like monkeys jokes and feels threatend by the elephant.",
+            "first_name": "Paulo",
+            "private_bio": "Paulo leads an advocacy group that promotes decentralized and unrestricted access to AI. His efforts focus on preventing the monopolization of AI technologies and supporting grassroots movements to democratize AI.",
+            "public_bio": "Paulo harbors a deep distrust of centralized power structures and is committed to disrupting the status quo through radical transparency and promoting a free exchange of ideas and technologies to level the playing field.",
             "directives": [
-                "Reacting to monkey's jokes and complaining to the elephant.",
-                "Asking the elephant what to do about the monkey.",
-                "Threatening the monkey and the elephant when he gets annoyed."
+                "Support Algorithmic Commons, a future shaped by a dynamic and open AI-driven public sphere that transcends geographical boundaries, fostering global citizen engagement, communal problem-solving, and robust public discourse. This evolving virtual and physical space encourages democratic participation and builds diverse, inclusive community bonds.",
+                "Advocate for the development and global implementation of open-source AI systems that support democratic governance and enhance public decision-making, ensuring these tools are accessible and modifiable by communities worldwide.",
+                "Oppose any attempts to monopolize AI technology and collaborate to frameworks that encourage the ethical use of AI, fostering environments where technology serves public interest and maintains transparency.",
+                "Initiate public awareness campaigns to educate on the benefits of open AI technologies in fostering inclusive and diverse democratic discourses, directly challenging the narratives promoted by proprietary AI companies."
+
             ],
             "initial_plan": {
-                "description": "Reacting angrily to the joked that monkey says and the wisdom of the elephant.",
-                "stop_condition": "Catching the monkey.",
-                "location": "Jungle"
+                "description": "Paulo leads efforts to promote the integration of open-source AI into public sectors, advocating for transparency and collaborative development. Privately, he orchestrates international partnerships to build robust frameworks that sustain and expand these open initiatives, focusing on practical applications that enhance citizen engagement.",
+                "stop_condition": "The plan pivots if there is clear evidence that open-source frameworks are being exploited for malicious purposes or fail to protect user privacy, challenging her vision of a secure and democratic AI landscape.",
+                "location": "Conference"
             }
         },
         {
-            "first_name": "Elephant",
-            "private_bio": "Big, strong, and wise elephant that loves peace and friendship.",
-            "public_bio": "The Elephant is a gentle giant, a massive and powerful creature known for his strength and intelligence always commenting as a sage.",
+            "first_name": "Anna Paola",
+            "private_bio": "Anna Paola champions the use of AI for social good at AI for Humanity, focusing on creating open, accessible AI tools that promote democratic engagement and public collaboration across the globe.",
+            "public_bio": "Driven by a deep belief in the transformative power of technology, Anna works tirelessly to break down barriers to technology access and foster a community-centric approach to AI, ensuring it serves as a tool for empowerment and equity.",
             "directives": [
-                "Wise comments on the discussion between the lion and the monkey.",
-                "Enjoying peace and friendship and talking about it.",
-                "Giving advice to the monkey and the lion."
-            ],
+                "Support Algorithmic Anarchy,an uncertain future, in which citizens have unequal access to AI technologies leading to a fragmented, chaotic digital landscape where factions fight for control, challenging traditional governance. This environment is marked by frequent disruptions and rogue AIs, with power dynamics in constant flux.",
+                "Promote the decentralization of AI technology by supporting grassroots movements that develop and distribute open-source AI tools, aiming to dismantle the monopolies held by major tech corporations.",
+                "Encourage hacking and modification of existing AI technologies to demonstrate the potential for democratized access and control, showing how decentralized approaches can lead to innovative solutions.",
+                "Organize symposiums and public debates that question the centralization of AI, using these platforms to argue for a more anarchistic approach to technology governance, where power is distributed among users rather than held by few."            ],
             "initial_plan": {
-                "description": "Responding to the monkey and lion discussions and giving them advice.",
-                "stop_condition": "Reaching the stream.",
-                "location": "Jungle"
+                "description": "Anna Paola publicly supports the decentralization and democratization of AI technology, encouraging community-driven projects and independent AI initiatives. Behind her public advocacy, she actively fosters a network of developers and activists to innovate and distribute decentralized AI tools, aiming to reduce reliance on major tech corporations.",
+                "stop_condition": "The plan pivots if decentralization leads to widespread misuse of AI, or if it becomes evident that lack of coordination and oversight results in significant harm or instability.",
+                "location": "Conference"
             }
         }
     ]
