@@ -1,5 +1,5 @@
 <p align="center">
-  <h1 align="center">GPTeam: Collaborative AI Agents appropriation - fork for learning (elephant, lion and monkey AI fable)</h1>
+  <h1 align="center">GPTeam: Collaborative LLM Agent to Agent simulation </h1>
   <p align="center">
      The original post explaning the solution
   <a href="https://blog.langchain.dev/gpteam-a-multi-agent-simulation/"><b>Blog Post</b></a>
@@ -13,8 +13,11 @@
 ## About GPTeam
 
 GPTeam uses GPT-4 to create multiple agents who collaborate to achieve predefined goals. The main objective of this project is to explore the potential of GPT models in enhancing multi-agent productivity and effective communication.
+We appropriated it to do research on deliberation over co-designing prompts and following the simulation in a group setting, comparing real and simulated discussion, or enacting issues and achieving some form of catharsis
 
 Video demo of the AI fable (appropriated the original use case): [https://www.youtube.com/watch?v=cIxhI1d6NsM](https://youtu.be/xIZlo0f8vic?t=2) 
+Soon more... 
+
 
 Read more about the architecture here: https://blog.langchain.dev/gpteam-a-multi-agent-simulation/
 
