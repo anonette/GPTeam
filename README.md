@@ -1,5 +1,5 @@
 <p align="center">
-  <h1 align="center">GPTeam: Collaborative LLM Agent to Agent simulation </h1>
+  <h1 align="center"> Co-designed Prompts in Collaborative LLM-based Agent to Agent simulation </h1>
   <p align="center">
      The original post explaning the solution
   <a href="https://blog.langchain.dev/gpteam-a-multi-agent-simulation/"><b>Blog Post</b></a>
@@ -12,21 +12,26 @@
 
 ## About GPTeam
 
-GPTeam uses GPT-4 to create multiple agents who collaborate to achieve predefined goals. The main objective of this project is to explore the potential of GPT models in enhancing multi-agent productivity and effective communication.
-We appropriated it to do research on deliberation over co-designing prompts and following the simulation in a group setting, comparing real and simulated discussion, or enacting issues and achieving some form of catharsis
+GPTeam uses GPT-4 to create multiple agents who collaborate to achieve predefined goals. Their main objective ofwas to explore the potential of GPT models in enhancing multi-agent productivity and effective communication.
+We appropriated the project to do research on deliberation over co-designing prompts and following the simulation in a group setting, comparing real and simulated discussions, or enacting the issues to experience catharsis in decision making.
+
+Related papers:   
+ Governance in Silico: Experimental Sandbox for Policymaking over AI Agents
+[https://dl.designresearchsociety.org/drs-conference-papers/drs2024/researchpapers/11/](https://dl.designresearchsociety.org/drs-conference-papers/drs2024/researchpapers/11/) 
+
+Sandboxes as “trading zones" for engaging with AI regulation, ethics, and the EU AI Act: How to Reclaim Agency over the Future?
+[https://osf.io/preprints/socarxiv/59qna](https://osf.io/preprints/socarxiv/59qna) 
+
 
 Video demo of the AI fable (appropriated the original use case): [https://www.youtube.com/watch?v=cIxhI1d6NsM](https://youtu.be/xIZlo0f8vic?t=2) 
 Soon more... 
-
 
 Read more about the architecture here: https://blog.langchain.dev/gpteam-a-multi-agent-simulation/
 
 ## Getting started
 
-To begin exploring GPTeam, follow these steps:
-
 1. Clone the project repository to your local machine
-2. Move to the repository: `cd gpteam`
+2. Move to the repository: 'cd gpteam'
 3. Run `python setup.py` to check your environment setup and configure it as needed
 4. Update the environment variables in `.env` with your API Keys. You will need an OpenAI API key, which you can obtain [here](https://platform.openai.com/account/api-keys). Supplying API keys for optional services will enable the use of other tools.
 5. Launch the world by running `poetry run world`
