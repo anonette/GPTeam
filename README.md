@@ -4,7 +4,7 @@
      The original post explaning the solution
   <a href="https://blog.langchain.dev/gpteam-a-multi-agent-simulation/"><b>Blog Post</b></a>
   
-  </p>adiv align="center">
+  </p>div align="center">
      <img src="https://github.com/anonette/GPTeam/assets/5162819/a4ae4a3b-83cb-4821-aa55-f84f5fee3530" alt="GitHub Image">
       </div>
 </p>
