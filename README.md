@@ -29,12 +29,32 @@ Soon more...
 Read more about the architecture here: https://blog.langchain.dev/gpteam-a-multi-agent-simulation/
 
 ## Getting started
+### Deps
+ - install [VScode](https://code.visualstudio.com/Download) - while not a must, it helps.
+ - install [python 3.10+](https://www.python.org/downloads/release/python-3124/) - scroll down and pick you OS
+ - install [git](https://git-scm.com/downloads) 
 
-1. Clone the project repository to your local machine
-2. Move to the repository: 'cd gpteam'
-3. Run `python setup.py` to check your environment setup and configure it as needed
-4. Update the environment variables in `.env` with your API Keys. You will need an OpenAI API key, which you can obtain [here](https://platform.openai.com/account/api-keys). Supplying API keys for optional services will enable the use of other tools.
-5. Launch the world by running `poetry run world`
+If on **windows**, you will need to enable linux subsystem (WSL, here's [an how-to](https://learn.microsoft.com/en-us/windows/wsl/install))  
+and then inside VSCode click the blue box[1] and choose WSL[2]
+
+<img src="https://github.com/anonette/GPTeam/assets/222526/7ed1f2ee-a834-4bb2-acf0-c6819549ab7b" width="400">
+
+
+### how to run
+inside vscode, run the following in the terminal
+
+Clone the project repository to your local machine  
+`git clone https://github.com/anonette/GPTeam`
+
+Move to the repository directory  
+`cd gpteam`
+
+Run `python setup.py` to check your environment setup and configure it as needed
+
+Update the environment variables in `.env` with your API Keys. You will need an OpenAI API key, which you can obtain [here](https://platform.openai.com/account/api-keys). Supplying API keys for optional services will enable the use of other tools.
+
+Launch the world by running 
+`poetry run world`
 
 To run the world cheaply, you can use `poetry run world --turbo`. This will use gpt3.5-turbo for all LLM calls which is a lot cheaper, but expect worse results!
 
