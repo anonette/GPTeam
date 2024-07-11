@@ -4,17 +4,15 @@
      The original post explaning the solution
   <a href="https://blog.langchain.dev/gpteam-a-multi-agent-simulation/"><b>Blog Post</b></a>
   
-  </p>
-    <div align="center">
+  </p>adiv align="center">
      <img src="https://github.com/anonette/GPTeam/assets/5162819/a4ae4a3b-83cb-4821-aa55-f84f5fee3530" alt="GitHub Image">
       </div>
 </p>
 
-## About GPTeam
+## Using GPTeam for Research into Stakeholder Deliberation
 
-GPTeam uses GPT-4 to create multiple agents who collaborate to achieve predefined goals. Their main objective ofwas to explore the potential of GPT models in enhancing multi-agent productivity and effective communication.
-We appropriated the project to do research on deliberation over co-designing prompts and following the simulation in a group setting, comparing real and simulated discussions, or enacting the issues to experience catharsis in decision making.
-
+The original GPTeam uses GPT-4 to create multiple agents who collaborate to achieve predefined goals. Their main objective ofwas to explore the potential of GPT models in enhancing multi-agent productivity and effective communication.
+We appropriated the project to do research on deliberation over co-designing prompts and follow the simulations in a group setting, comparing real and simulated discussions, alsoto enact the issues and research possibility of catharsis in decision making.
 Related papers:   
  Governance in Silico: Experimental Sandbox for Policymaking over AI Agents
 [https://dl.designresearchsociety.org/drs-conference-papers/drs2024/researchpapers/11/](https://dl.designresearchsociety.org/drs-conference-papers/drs2024/researchpapers/11/) 
