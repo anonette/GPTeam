@@ -1,6 +1,5 @@
 import asyncio
 import os
-import subprocess
 import traceback
 import webbrowser
 from multiprocessing import Process
@@ -11,14 +10,12 @@ import toml
 from dotenv import load_dotenv
 
 from src.utils.database.client import get_database
-from src.utils.discord import discord_listener
 from src.world.base import World
 
 from .utils.colors import LogColor
 from .utils.database.base import Tables
 from .utils.formatting import print_to_console
 from .utils.logging import init_logging
-from .utils.parameters import DISCORD_ENABLED
 from .web import get_server
 from .utils.general import get_open_port
 
@@ -88,11 +85,9 @@ def is_wsl():
 def run():
     port = get_open_port()
 
-    process_discord = Process(target=discord_listener)
     process_world = Process(target=run_world)
     process_server = Process(target=run_server)
 
-    process_discord.start()
     process_world.start()
     process_server.start()
 
@@ -105,7 +100,6 @@ def run():
     else:
         print(f"Running in WSL. Please open a browser and navigate to http://127.0.0.1:{port}")
 
-    process_discord.join()
     process_world.join()
     process_server.join()
 
