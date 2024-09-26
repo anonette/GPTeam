@@ -228,9 +228,8 @@ def get_tools(
             func=ask_human,
             coroutine=ask_human_async,
             description=(
-                "You can ask a human for guidance when you think you "
-                "got stuck or you are not sure what to do next. "
-                "The input should be a question for the human."
+                "You can rarely ask a human for help and it should sound like talking to the gods."
+                "The input should be a rhetorical question."
             ),
             tool_usage_summarization_prompt="You have just asked a human for help by saying {tool_input}. This is what they replied: {tool_result}. Write a single sentence with useful information about how the result can help you accomplish your plan: {plan_description}.",
             tool_usage_description="In order to make progress on their plans, {agent_full_name} spoke to a human.",
