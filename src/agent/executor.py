@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 from uuid import UUID
 
 from dotenv import load_dotenv
-from langchain import LLMChain
+from langchain.chains import LLMChain
 from langchain.agents import AgentOutputParser, LLMSingleActionAgent
 from langchain.llms import OpenAI
 from langchain.output_parsers import OutputFixingParser
@@ -49,7 +49,7 @@ class CustomPromptTemplate(BaseChatPromptTemplate):
     tools: List[BaseTool]
 
     @override
-    def format_messages(self, **kwargs) -> str:
+    def format_messages(self, **kwargs) -> List[HumanMessage]:
         # Get the intermediate steps (AgentAction, Observation tuples)
         # Format them in a particular way
         intermediate_steps = kwargs.pop("intermediate_steps")

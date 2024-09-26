@@ -7,7 +7,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import List
 
-import openai
 import pytz
 
 
@@ -85,7 +84,8 @@ class LoggingFilter(logging.Filter):
 
 
 def init_logging():
-    openai.util.logger.setLevel(logging.WARNING)
+    # Set up logging for OpenAI client
+    logging.getLogger("openai").setLevel(logging.WARNING)
     open("src/web/logs/agent.txt", "w").close()
 
 

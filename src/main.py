@@ -6,7 +6,8 @@ import webbrowser
 from multiprocessing import Process
 from time import sleep
 
-import openai
+from openai import OpenAI
+import toml
 from dotenv import load_dotenv
 
 from src.utils.database.client import get_database
@@ -25,9 +26,19 @@ load_dotenv()
 
 init_logging()
 
+# Read pyproject.toml
+with open("pyproject.toml", "r") as f:
+    pyproject = toml.load(f)
+
+# Get OpenAI base URL from pyproject.toml
+openai_base_url = pyproject.get("tool", {}).get("openai", {}).get("base_url", "https://api.openai.com/v1")
 
 async def run_world_async():
-    openai.api_key = os.getenv("OPENAI_API_KEY")
+    api_key = os.getenv("OPENAI_API_KEY")
+    # api_key = os.getenv("OPENROUTER_API_KEY")
+    client = OpenAI(api_key=api_key, base_url=openai_base_url)
+    print(f"Using OpenAI base URL: {client.base_url}")
+    print(f"API Key: {api_key[:5]}...{api_key[-5:]}")
     try:
         database = await get_database()
 
@@ -70,6 +81,10 @@ def run_in_new_loop(coro):
         loop.close()
 
 
+def is_wsl():
+    return 'microsoft-standard' in os.uname().release
+
+
 def run():
     port = get_open_port()
 
@@ -83,8 +98,12 @@ def run():
 
     sleep(3)
 
-    print(f"Opening browser on port {port}...")
-    webbrowser.open(f"http://127.0.0.1:{port}")
+    print(f"Server running on port {port}...")
+    if not is_wsl():
+        print("Opening browser...")
+        webbrowser.open(f"http://127.0.0.1:{port}")
+    else:
+        print(f"Running in WSL. Please open a browser and navigate to http://127.0.0.1:{port}")
 
     process_discord.join()
     process_world.join()
