@@ -6,7 +6,7 @@ from enum import Enum
 from typing import Any, Awaitable, Callable, List, Optional, Type, Union
 from uuid import UUID
 
-from langchain import GoogleSearchAPIWrapper, SerpAPIWrapper, WolframAlphaAPIWrapper
+from langchain.utilities import GoogleSearchAPIWrapper, SerpAPIWrapper, WolframAlphaAPIWrapper
 from langchain.agents import Tool, load_tools
 from langchain.llms import OpenAI
 from langchain.tools import BaseTool

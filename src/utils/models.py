@@ -1,11 +1,13 @@
 from enum import Enum
 
 from dotenv import load_dotenv
-from langchain.chat_models import ChatAnthropic, ChatOpenAI
+from langchain.chat_models import ChatAnthropic
+from langchain_openai import ChatOpenAI
 from langchain.chat_models.base import BaseChatModel
 from langchain.llms import OpenAI
-from langchain.schema import BaseMessage
+from langchain.schema.messages import BaseMessage
 from utils.windowai_model import ChatWindowAI
+from openai import OpenAIError
 
 from .cache import chat_json_cache, json_cache
 from .model_name import ChatModelName
@@ -22,9 +24,9 @@ def get_chat_model(name: ChatModelName, **kwargs) -> BaseChatModel:
         del kwargs["model"]
 
     if name == ChatModelName.TURBO:
-        return ChatOpenAI(model_name=name.value, **kwargs)
+        return ChatOpenAI(model=name.value, **kwargs)
     elif name == ChatModelName.GPT4:
-        return ChatOpenAI(model_name=name.value, **kwargs)
+        return ChatOpenAI(model=name.value, **kwargs)
     elif name == ChatModelName.CLAUDE:
         return ChatAnthropic(model=name.value, **kwargs)
     elif name == ChatModelName.CLAUDE_INSTANT:
@@ -48,12 +50,13 @@ class ChatModel:
     ):
         self.defaultModel = get_chat_model(default_model_name, **kwargs)
         self.backupModel = get_chat_model(backup_model_name, **kwargs)
+        print(f"Initialized ChatModel with default model: {default_model_name.value}, backup model: {backup_model_name.value}")
 
     @chat_json_cache(sleep_range=(0, 0))
     async def get_chat_completion(self, messages: list[BaseMessage], **kwargs) -> str:
         try:
             resp = await self.defaultModel.agenerate([messages])
-        except Exception:
+        except OpenAIError:
             resp = await self.backupModel.agenerate([messages])
 
         return resp.generations[0][0].text
@@ -61,7 +64,7 @@ class ChatModel:
     def get_chat_completion_sync(self, messages: list[BaseMessage], **kwargs) -> str:
         try:
             resp = self.defaultModel.generate([messages])
-        except Exception:
+        except OpenAIError:
             resp = self.backupModel.generate([messages])
 
         return resp.generations[0][0].text

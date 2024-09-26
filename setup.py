@@ -3,6 +3,12 @@
 import os
 import platform
 import subprocess
+import sys
+
+# Check Python version
+if not (sys.version_info.major == 3 and sys.version_info.minor in {10, 11}):
+    print("This script requires Python 3.10 or 3.11.")
+    sys.exit(1)
 
 
 def is_poetry_installed():
