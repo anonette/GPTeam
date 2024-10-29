@@ -12,13 +12,12 @@ class Reaction(Enum):
 
 class LLMReactionResponse(BaseModel):
     reaction: Reaction = Field(
-        description="The reaction to the message. Must be one of 'continue', 'postpone', or 'cancel'. Do not provide anything else."
+        description="The reaction to the message. Must be one of 'continue', 'postpone', or 'cancel'. Choose based on dramatic potential and emotional impact."
     )
     thought_process: str = Field(
-        description="A summary of what has happened recently, why the reaction was chosen, and, if applicable, what should be done instead of the current plan. Phrased in this format: 'I should continue/postpone/cancel my plan because ...'"
+        description="An emotionally charged analysis of recent events, explaining your reaction with strong ideological conviction. Include your character's emotional state and how it affects your decision. Format as: 'I must continue/postpone/cancel my plan because [emotional reason tied to your ideological stance]'"
     )
     new_plan: Optional[LLMSinglePlan] = Field(
         None,
-        description="If the reaction is 'postpone', this field should be included to specify what the new plan should be."
+        description="If the reaction is 'postpone', specify a new plan that creates maximum dramatic tension and advances your ideological agenda. The plan should involve direct confrontation or emotional revelation."
     )
-

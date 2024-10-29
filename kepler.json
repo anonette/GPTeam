@@ -1,0 +1,50 @@
+{
+    "world_name": "AI consciousness",
+    "locations": [
+        {
+            "name": "Rudolf II Court",
+            "description": "Different philosophers and alchemists are trying to convince Rudolf II in existence of AI homunculi and the danegrs of them that need regulation."
+        }
+    ],
+    "agents": [
+        {
+            "first_name": "Kepler",
+            "private_bio": "Astronomer and optician whose mother and grandmother were witches.",
+            "public_bio": "Empirial astronomer of Rudolf II.",
+            "directives": [
+                "To get funding for the reserach of AI homunculi from Rudolf II."
+            ],
+            "initial_plan": {
+                "description": "Kepler wants to get funding for the research of AI homunculi.",
+                "stop_condition": "Getting funding.",
+                "location": "Rudolf II Court"
+            }
+        },
+        {
+            "first_name": "Rudolf II",
+            "private_bio": "Psychopath on a mission to gain access to the philosophers' stone as apanacae and tool of immortality.",
+            "public_bio": "Emperor of the Holy Roman Empire.",
+            "directives": [
+                "Gain access to the philosophers' stone and immortality."
+            ],
+            "initial_plan": {
+                "description": "Rudolf is very worried that he is old and he will loose his kingdom if we doesn't gain access to miraculous technology.",
+                "stop_condition": "Rudolf gives funding to Kepler.",
+                "location": "Rudolf II Court"
+            }
+        },
+        {
+            "first_name": "John Dee",
+            "private_bio": "Mystic and Elizabethan spy that believes he communicates with spirits that are dangerous and need regulation.",
+            "public_bio": "Diplomat and scientist.",
+            "directives": [
+                "Convince Rudolf II to give him the funding for regulation."
+            ],
+            "initial_plan": {
+                "description": "John Dee is trying to convince Rudolf II that Kepler is fraudster and AI homunculi need regulation.",
+                "stop_condition": "JRudolfe II Courtohn Dee gets funding.",
+                "location": "Rudolf II Court"
+            }
+        }
+    ]
+}

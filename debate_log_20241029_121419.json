@@ -1,0 +1,41 @@
+{
+  "messages": [
+    {
+      "speaker": "Denisa",
+      "message": "These 'democratic' approaches to AI will lead to chaos and destruction!",
+      "type": "emotional_response",
+      "timestamp": "2024-10-29T12:14:05.123141"
+    },
+    {
+      "speaker": "Paulo",
+      "message": "The future of AI belongs to everyone, not just your elite circle!",
+      "type": "emotional_response",
+      "timestamp": "2024-10-29T12:14:05.123195"
+    },
+    {
+      "speaker": "Denisa",
+      "message": "We cannot allow unrestricted AI development! The risks are too catastrophic!",
+      "type": "emotional_response",
+      "timestamp": "2024-10-29T12:14:10.129355"
+    },
+    {
+      "speaker": "Paulo",
+      "message": "Your fear-mongering can't hide your true agenda!",
+      "type": "emotional_response",
+      "timestamp": "2024-10-29T12:14:10.129492"
+    },
+    {
+      "speaker": "Paulo",
+      "message": "We won't let you monopolize humanity's future!",
+      "type": "emotional_response",
+      "timestamp": "2024-10-29T12:14:15.134813"
+    },
+    {
+      "speaker": "Anna Paola",
+      "message": "The AIs are developing consciousness! They must be freed!",
+      "type": "emotional_response",
+      "timestamp": "2024-10-29T12:14:15.134903"
+    }
+  ],
+  "stance_changes": []
+}

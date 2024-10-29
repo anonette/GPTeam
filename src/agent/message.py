@@ -247,8 +247,35 @@ async def get_conversation_history(
     # limit the messages to 20
     messages = messages[-20:]
 
-    formatted_messages = [
-        f"{m.sender_name}: {m.content} @ {m.timestamp}" for m in messages
-    ]
+    # Group messages by conversation thread
+    conversation_threads = {}
+    for msg in messages:
+        # Create a unique key for each conversation thread
+        if msg.recipient_id:
+            thread_key = tuple(sorted([str(msg.sender_id), str(msg.recipient_id)]))
+        else:
+            thread_key = ('everyone', str(msg.sender_id))
+            
+        if thread_key not in conversation_threads:
+            conversation_threads[thread_key] = []
+        conversation_threads[thread_key].append(msg)
+
+    # Format messages with conversation context
+    formatted_messages = []
+    for thread_key, thread_messages in conversation_threads.items():
+        # Sort messages within each thread by timestamp
+        thread_messages.sort(key=lambda x: x.timestamp)
+        
+        # Add thread separator
+        if thread_messages[0].recipient_id:
+            formatted_messages.append(f"\nConversation between {thread_messages[0].sender_name} and {thread_messages[0].recipient_name}:")
+        else:
+            formatted_messages.append(f"\nBroadcast messages from {thread_messages[0].sender_name}:")
+            
+        # Add messages with timestamps
+        for m in thread_messages:
+            formatted_messages.append(
+                f"{m.sender_name}: {m.content} @ {m.timestamp}"
+            )
 
     return "\n".join(formatted_messages)

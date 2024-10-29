@@ -1,0 +1,46 @@
+CHANGELOG - Simulation Code Changes
+
+1. Location Name Fix (config.json)
+- Changed location name from "Conference" to "Conference Hall" to match LLM expectations
+- Updated all location references in config.json to use consistent naming
+
+2. Message History Improvements (src/agent/message.py)
+- Enhanced get_conversation_history function to organize messages into conversation threads
+- Added thread-based grouping of messages
+- Improved message formatting to show clear conversation context
+- Added thread separators to distinguish different conversations
+- Added timestamp tracking for each message in threads
+- Implemented better handling of broadcast vs direct messages
+
+3. Conversation State Handling (src/utils/prompt.py)
+- Updated HAS_HAPPENED prompt with comprehensive rules for conversation state:
+  * Added rule for only considering messages after last message in thread
+  * Added rule for requiring direct relation to most recent message
+  * Added rule for handling old vs new conversation responses
+  * Added rule for broadcast message response handling
+  * Added rule for specific recipient response requirements
+
+- Added detailed examples in HAS_HAPPENED prompt:
+  * Example 1: Direct response scenario
+  * Example 2: Broadcast response scenario
+  * Example 3: Old response handling scenario
+
+- Enhanced prompt clarity:
+  * Added IMPORTANT RULES section
+  * Added explicit formatting for conversation threads
+  * Added timestamp-based response validation
+  * Added context-aware response checking
+
+4. JSON Formatting Improvements (src/utils/prompt.py)
+- Enhanced EXECUTE_PLAN prompt to emphasize proper JSON formatting
+- Added explicit example for speak tool JSON format
+- Made JSON requirement more prominent in instructions
+
+These changes work together to:
+1. Prevent conversation deadlocks
+2. Improve message threading
+3. Handle response validation properly
+4. Maintain conversation context
+5. Ensure proper tool input formatting
+
+The result should be more natural conversation flow and fewer stuck states in the simulation.
