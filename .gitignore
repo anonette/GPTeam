@@ -170,3 +170,5 @@ vectors.pickle.gz
 agents/*.txt
 discord_server.out
 discord_server_errors.out
+audio_output/*
+archive/*
