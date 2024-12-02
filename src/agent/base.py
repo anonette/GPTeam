@@ -1,4 +1,7 @@
-import asyncio
+Error
+Error writing file:
+Failed to open diff editor, please try again
+    import asyncio
 import json
 import os
 import random
@@ -67,15 +70,16 @@ class Agent(BaseModel):
     authorized_tools: list[ToolName]
     world_id: UUID
     notes: list[str] = []
-    plan_executor: PlanExecutor = None
+    plan_executor: Optional[PlanExecutor] = None
     context: WorldContext
     location: Location
-    discord_bot_token: str = None
-    react_response: LLMReactionResponse = None
+    discord_bot_token: Optional[str] = None
+    react_response: Optional[LLMReactionResponse] = None
     recent_activity: str = ""
 
     class Config:
         allow_underscore_names = True
+        arbitrary_types_allowed = True
 
     def __init__(
         self,
@@ -514,7 +518,7 @@ class Agent(BaseModel):
         self.context.update_agent(self._db_dict())
 
         # update agent in db
-        await self._update_agent_row(),
+        await self._update_agent_row()
 
         if DISCORD_ENABLED:
             await announce_bot_move(
@@ -879,202 +883,5 @@ class Agent(BaseModel):
             k=20,
         )
 
-        self.plan_executor = PlanExecutor(
-            self.id,
-            world_context=self.context,
-            message_to_respond_to=plan.related_message,
-            relevant_memories=relevant_memories,
-        )
-
-        resp: PlanExecutorResponse = await self.plan_executor.start_or_continue_plan(
-            plan, tools=self._get_current_tools()
-        )
-
-        # IF the plan failed
-        if resp.status == PlanStatus.FAILED:
-            self._log(
-                "Action Failed",
-                f"{plan.description} Error: {resp.output}",
-            )
-
-            # update the plan in the local agent object
-            plan.scratchpad = resp.scratchpad
-            plan.status = resp.status
-            self.update_plan(plan)
-
-            # update the plan in the db
-            await self._upsert_plan_rows([plan])
-
-            # remove all plans with the same description
-            self.plans = [p for p in self.plans if p.description != plan.description]
-
-            event = Event(
-                agent_id=self.id,
-                timestamp=datetime.now(pytz.utc),
-                type=EventType.NON_MESSAGE,
-                description=f"{self.full_name} has failed to complete the following: {plan.description} at the location: {plan.location.name}. {self.full_name} had the following problem: {resp.output}.",
-                location_id=self.location.id,
-            )
-
-            event = await self.context.add_event(event)
-
-        # If the plan is in progress
-        elif resp.status == PlanStatus.IN_PROGRESS:
-            self._log("Action In Progress", f"{plan.description}")
-
-            # update the plan in the local agent object
-            plan.scratchpad = resp.scratchpad
-            plan.status = resp.status
-            self.update_plan(plan)
-
-            # update the plan in the db
-            await self._upsert_plan_rows([plan])
-
-            # IF the tool use failed, there will be no tool object
-            if resp.tool:
-                tool_usage_summary = await resp.tool.summarize_usage(
-                    plan_description=plan.description,
-                    tool_input=resp.tool_input,
-                    tool_result=resp.output,
-                    agent_full_name=self.full_name,
-                )
-
-        # If the plan is done, remove it from the list of plans
-        elif resp.status == PlanStatus.DONE:
-            self._log("Action Completed", f"{plan.description}")
-
-            # update the plan in the local agent object
-            plan.completed_at = datetime.now(pytz.utc)
-            plan.scratchpad = resp.scratchpad
-            plan.status = resp.status
-            self.update_plan(plan)
-
-            # update the plan in the db
-            await self._upsert_plan_rows([plan])
-
-            # remove all plans with the same description
-            self.plans = [p for p in self.plans if p.description != plan.description]
-
-        return resp.status
-
-    async def _do_first_plan(self) -> None:
-        """Do the first plan in the list"""
-
-        current_plan = None
-
-        # If we do not have a plan state, consult the plans or plan something new
-        # If we have no plans, make some
-        if len(self.plans) == 0:
-            print(f"{self.full_name} has no plans, making some...")
-            await self._plan()
-
-        current_plan = self.plans[0]
-
-        await self._act(current_plan)
-
-    async def observe(self) -> list[Event]:
-        # Take in new events and add them to memory. Return the events
-
-        # Get new events witnessed by this agent
-        last_checked_events = self.last_checked_events
-
-        self.last_checked_events = datetime.now(pytz.utc)
-
-        (events, _) = await self.context.events_manager.get_events(
-            after=last_checked_events, witness_ids=[self.id], force_refresh=True
-        )
-
-        self._log(
-            "Observe",
-            f"Observed {len(events)} new events since {last_checked_events.strftime('%H:%M:%S')}",
-        )
-
-        if len(events) > 0:
-            # Make new memories based on the events
-            new_memories = [
-                await self._add_memory(
-                    event.description,
-                    created_at=event.timestamp,
-                    type=MemoryType.OBSERVATION,
-                    log=False,
-                )
-                for event in events
-            ]
-
-        return events
-
-    async def write_progress_to_file(self):
-        agents_folder = os.path.join(os.getcwd(), "agents")
-        if not os.path.exists(agents_folder):
-            os.makedirs(agents_folder)
-
-        file_path = os.path.join(agents_folder, f"{self.full_name}.txt")
-
-        plans_in_progress = [
-            "🏃‍♂️ " + plan.description
-            for plan in self.plans
-            if plan.status == PlanStatus.IN_PROGRESS
-        ]
-
-        current_action = (
-            "\n".join(plans_in_progress) if len(plans_in_progress) > 0 else "No actions"
-        )
-
-        conversation_history = await get_conversation_history(self.id, self.context)
-
-        plans_to_do = [
-            "📆 " + plan.description
-            for plan in self.plans
-            if plan.status == PlanStatus.TODO
-        ]
-
-        current_plans = "\n".join(plans_to_do) if len(plans_to_do) > 0 else "No plans"
-
-        # Sort memories in reverse chronological order
-        sorted_memories = sorted(
-            self.memories, key=lambda m: m.created_at, reverse=True
-        )
-
-        memories = "\n".join(
-            [
-                f"{memory.created_at.replace(tzinfo=pytz.utc).strftime('%Y-%m-%d %H:%M:%S')}: {'👀' if memory.type == MemoryType.OBSERVATION else '💭'} {memory.description} (Importance: {memory.importance})"
-                for memory in sorted_memories
-            ]
-        )
-
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(
-                f"* {self.full_name}\n\nCurrent Action:\n{current_action}\n\nLocation: {self.location.name}\n\nCurrent Conversations:\n{conversation_history}\n\nCurrent Plans:\n{current_plans}\n\nMemories:\n{memories}\n"
-            )
-
-    async def run_for_one_step(self):
-        await asyncio.sleep(random.random() * 3)
-
-        events = await self.observe()
-
-        # if there's no current plan, make some
-        if len(self.plans) == 0:
-            print(f"{self.full_name} has no plans, making some...")
-            await self._plan()
-
-        # Decide how to react to these events
-        self.react_response = await self._react(events)
-
-        # If the reaction calls to cancel the current plan, remove the first one
-        if self.react_response.reaction == Reaction.CANCEL:
-            self.plans = self.plans[1:]
-
-        # If the reaction calls to postpone the current plan, insert the new plan at the top
-        elif self.react_response.reaction == Reaction.POSTPONE:
-            # create a new plan from the LLMSinglePlan
-            new_plan = await SinglePlan.from_llm_single_plan(self.id, self.react_response.new_plan)
-            self.plans.insert(0, new_plan)
-
-        # Work through the plans
-        await self._do_first_plan()
-
-        # Reflect, if we should
-        if await self._should_reflect():
-            await self._reflect()
-
-        await self.write_progress_to_file()
+        # Initialize the plan executor
+        self

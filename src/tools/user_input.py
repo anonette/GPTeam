@@ -1,9 +1,12 @@
+import sys
+import logging
 from colorama import Fore
 from langchain.agents import Tool
 
 from ..utils.colors import LogColor
 from ..utils.formatting import print_to_console
 
+logger = logging.getLogger(__name__)
 
 class UserInputTool(Tool):
     def __init__(self):
@@ -15,6 +18,11 @@ class UserInputTool(Tool):
 
     @staticmethod
     def get_user_input(question):
+        # Check if we're in a terminal
+        if not (hasattr(sys.stdin, 'isatty') and sys.stdin.isatty()):
+            logger.warning("Attempted to get user input in non-tty environment")
+            return ""
+            
         print_to_console("\nQuestion", LogColor.CLI_INPUT, question)
         i = input()
         return i

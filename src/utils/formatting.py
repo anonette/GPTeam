@@ -1,6 +1,8 @@
 import random
 import re
+import sys
 import time
+import logging
 from enum import Enum
 
 import numpy as np
@@ -8,6 +10,7 @@ from colorama import Fore, Style
 
 from .colors import LogColor
 
+logger = logging.getLogger(__name__)
 
 def print_to_console(
     title: str,
@@ -16,6 +19,20 @@ def print_to_console(
     min_typing_speed=0.06,
     max_typing_speed=0.04,
 ):
+    # Check if we're in a terminal
+    is_tty = hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
+    
+    if not is_tty:
+        # If not in a terminal, just log the message
+        if content:
+            if isinstance(content, list):
+                content = " ".join(content)
+            logger.info(f"{title}: {content}")
+            return
+        else:
+            logger.info(title)
+            return
+
     print(title_color.value + title + " " + Style.RESET_ALL, end="")
     if content:
         if isinstance(content, list):

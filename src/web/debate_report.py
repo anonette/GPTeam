@@ -18,6 +18,21 @@ def create_debate_report(log_file: str) -> None:
         st.header("🔄 Debate Evolution")
         dynamics = analysis['debate_dynamics']
         
+        # Show emotional responses timeline
+        st.subheader("💭 Emotional Response Flow")
+        emotional_responses = [msg for msg in analysis.get('messages', []) 
+                             if msg.get('category') == 'emotional_response']
+        if emotional_responses:
+            for resp in emotional_responses[:5]:  # Show latest 5
+                with st.container():
+                    st.markdown(f"""
+                    <div style='padding: 10px; border-left: 3px solid #e74c3c;'>
+                    <strong>{resp['speaker']}</strong><br>
+                    {resp['message']}
+                    </div>
+                    """, unsafe_allow_html=True)
+                    st.write("")
+        
         # Show influential arguments in a modern card-like format
         if dynamics['influential_arguments']:
             st.subheader("💡 Most Impactful Arguments")
@@ -29,7 +44,7 @@ def create_debate_report(log_file: str) -> None:
                     {arg['argument']}
                     </div>
                     """, unsafe_allow_html=True)
-                    st.write("")  # Add spacing
+                    st.write("")
         
         # Show stance changes in a timeline-like format
         if dynamics['stance_changes']:
@@ -42,7 +57,7 @@ def create_debate_report(log_file: str) -> None:
                     {change['reason'].split('.')[0]}
                     </div>
                     """, unsafe_allow_html=True)
-                    st.write("")  # Add spacing
+                    st.write("")
         
         # Display participation statistics in a modern grid
         st.header("👥 Participation Analysis")
@@ -53,6 +68,8 @@ def create_debate_report(log_file: str) -> None:
                 st.metric("Messages", stats['count'])
                 st.metric("Broadcasts", stats['broadcasts'])
                 st.metric("Direct Conversations", stats['conversations'])
+                if 'emotional_responses' in stats:
+                    st.metric("Emotional Responses", stats['emotional_responses'])
         
         # Display interaction patterns with visual hierarchy
         st.header("🔄 Interaction Dynamics")

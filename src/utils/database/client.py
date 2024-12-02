@@ -24,3 +24,10 @@ async def get_database():
     if database is None:
         database = await database_class.create()
     return database
+
+
+async def close_database():
+    global database
+    if database is not None:
+        await database.close()
+        database = None

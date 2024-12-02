@@ -1,3 +1,4 @@
+from datetime import datetime
 from langchain.output_parsers import OutputFixingParser, PydanticOutputParser
 from pydantic import BaseModel, Field, validator
 
@@ -19,12 +20,24 @@ class HasHappenedLLMResponse(BaseModel):
 
 async def wait_async(agent_input: str, tool_context: ToolContext) -> str:
     """Wait for a specified event to occur."""
+    
+    # Get only memories that occurred after the last memory
+    if tool_context.memories:
+        last_memory_time = max(m.created_at for m in tool_context.memories)
+        recent_memories = [
+            f"{m.description} @ {m.created_at}" 
+            for m in tool_context.memories 
+            if m.created_at >= last_memory_time
+        ]
+    else:
+        recent_memories = []
 
-    # Get the memories
-    memories = [f"{m.description} @ {m.created_at}" for m in tool_context.memories]
+    # If no recent memories, return waiting message
+    if not recent_memories:
+        return "Waiting for new events..."
 
     # Set up the LLM, Parser, and Prompter
-    llm = ChatModel(temperature=0)
+    llm = ChatModel(temperature=0.8)
     parser = OutputFixingParser.from_llm(
         parser=PydanticOutputParser(pydantic_object=HasHappenedLLMResponse),
         llm=llm.defaultModel,
@@ -33,7 +46,7 @@ async def wait_async(agent_input: str, tool_context: ToolContext) -> str:
     prompter = Prompter(
         PromptString.HAS_HAPPENED,
         {
-            "memory_descriptions": "-" + "\n-".join(memories),
+            "memory_descriptions": "-" + "\n-".join(recent_memories),
             "event_description": agent_input,
             "format_instructions": parser.get_format_instructions(),
         },
@@ -49,12 +62,11 @@ async def wait_async(agent_input: str, tool_context: ToolContext) -> str:
     parsed_response: HasHappenedLLMResponse = parser.parse(response)
 
     if parsed_response.has_happened:
-        return f"The event I was waiting for occured at {parsed_response.date_occured}. No need to wait anymore."
+        return f"The event I was waiting for occurred at {parsed_response.date_occured}. Moving forward with the conversation."
     else:
-        return "The event I was waiting for has not happened yet. Waiting..."
+        return "Still waiting for a response..."
 
 
 def wait_sync(agent_input: str, tool_context: ToolContext) -> str:
     """Wait for a specified event to occur."""
-
     raise NotImplementedError("This tool is not implemented in sync mode")
