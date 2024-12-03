@@ -25,6 +25,29 @@ load_dotenv()
 
 init_logging()
 
+# Global variables for process management
+world_process = None
+server_process = None
+should_exit = False
+
+async def cleanup():
+    """Cleanup function to close connections and pending tasks"""
+    try:
+        # Close database connection
+        print("Closing database connection...")
+        db = await get_database()
+        await db.close()
+        
+        # Cancel all pending tasks
+        print("Canceling pending tasks...")
+        tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
+        for task in tasks:
+            task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+        
+    except Exception as e:
+        print(f"Error during cleanup: {str(e)}")
+        print(traceback.format_exc())
 
 async def run_world_async():
     openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -49,13 +72,13 @@ async def run_world_async():
 
         print("Starting world simulation...")
         await world.run()
+    except asyncio.CancelledError:
+        print("World simulation cancelled")
     except Exception as e:
         print(f"Error in world simulation: {str(e)}")
         print(traceback.format_exc())
     finally:
-        print("Closing database connection...")
-        await (await get_database()).close()
-
+        await cleanup()
 
 def run_world():
     try:
@@ -66,7 +89,6 @@ def run_world():
     except Exception as e:
         print(f"Error in world process: {str(e)}")
         print(traceback.format_exc())
-
 
 def run_server(port):
     try:
@@ -79,25 +101,46 @@ def run_server(port):
         print(f"Error in server process: {str(e)}")
         print(traceback.format_exc())
 
-
 def run_in_new_loop(coro):
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     try:
         loop.run_until_complete(coro)
+    except KeyboardInterrupt:
+        print("\nReceived keyboard interrupt, cleaning up...")
+        loop.run_until_complete(cleanup())
     except Exception as e:
         print(f"Error in event loop: {str(e)}")
         print(traceback.format_exc())
     finally:
-        loop.close()
-
+        try:
+            # Cancel all pending tasks
+            pending = asyncio.all_tasks(loop)
+            for task in pending:
+                task.cancel()
+            # Allow cancelled tasks to complete
+            loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+            # Close the event loop
+            loop.close()
+        except Exception as e:
+            print(f"Error during loop cleanup: {str(e)}")
 
 def signal_handler(signum, frame):
-    print("\nShutting down gracefully...")
-    sys.exit(0)
-
+    """Handle shutdown signals"""
+    global should_exit
+    if not should_exit:
+        should_exit = True
+        print("\nShutting down gracefully...")
+        # Terminate child processes
+        if world_process and world_process.is_alive():
+            world_process.terminate()
+        if server_process and server_process.is_alive():
+            server_process.terminate()
+        sys.exit(0)
 
 def run():
+    global world_process, server_process
+    
     # Use spawn method for process creation
     set_start_method('spawn', force=True)
     
@@ -108,13 +151,13 @@ def run():
     port = get_open_port()
     print(f"Active port found: {port}")
 
-    process_world = Process(target=run_world)
-    process_server = Process(target=run_server, args=(port,))
+    world_process = Process(target=run_world)
+    server_process = Process(target=run_server, args=(port,))
 
     try:
         print("Starting processes...")
-        process_world.start()
-        process_server.start()
+        world_process.start()
+        server_process.start()
 
         sleep(3)
 
@@ -122,24 +165,33 @@ def run():
         webbrowser.open(f"http://127.0.0.1:{port}")
 
         # Wait for processes to complete or interrupt
-        process_world.join()
-        process_server.join()
+        while not should_exit:
+            if not world_process.is_alive() or not server_process.is_alive():
+                break
+            sleep(1)
 
     except KeyboardInterrupt:
-        print("\nShutting down gracefully...")
+        print("\nReceived keyboard interrupt...")
     except Exception as e:
         print(f"Error in main process: {str(e)}")
         print(traceback.format_exc())
     finally:
         # Clean up processes
-        if process_world.is_alive():
-            process_world.terminate()
-            process_world.join()
-        if process_server.is_alive():
-            process_server.terminate()
-            process_server.join()
+        if world_process and world_process.is_alive():
+            print("Terminating world process...")
+            world_process.terminate()
+            world_process.join(timeout=5)
+            if world_process.is_alive():
+                world_process.kill()
+        
+        if server_process and server_process.is_alive():
+            print("Terminating server process...")
+            server_process.terminate()
+            server_process.join(timeout=5)
+            if server_process.is_alive():
+                server_process.kill()
+        
         print("Shutdown complete")
-
 
 def main():
     try:

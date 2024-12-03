@@ -66,7 +66,6 @@ class SqliteDatabase(DatabaseProviderSingleton):
         ) as cursor:
             return await cursor.fetchall()
 
-    # needs testing
     async def get_by_field_contains(
         self, table: Tables, field: str, value: Any, limit: int = None
     ) -> list[dict[str, Any]]:
@@ -83,7 +82,6 @@ class SqliteDatabase(DatabaseProviderSingleton):
         ) as cursor:
             return await cursor.fetchall()
 
-    # needs testing
     async def get_memories_since(
         self, timestamp: datetime, agent_id: str
     ) -> list[dict[str, Any]]:
@@ -100,7 +98,6 @@ class SqliteDatabase(DatabaseProviderSingleton):
         ) as cursor:
             return await cursor.fetchall()
 
-    # needs testing
     async def get_recent_events(
         self, world_id: str, limit: int
     ) -> list[dict[str, Any]]:
@@ -138,7 +135,7 @@ class SqliteDatabase(DatabaseProviderSingleton):
                     f"INSERT INTO {table.value} ({','.join(item.keys())}) VALUES ({','.join(['?'] * len(item))})",
                     tuple(item.values()),
                 )
-            await self.client.commit()
+        await self.client.commit()
 
     async def update(self, table: Tables, id: str, data: dict) -> None:
         for key, value in data.items():
@@ -181,12 +178,23 @@ class SqliteDatabase(DatabaseProviderSingleton):
         return docs
 
     async def close(self) -> None:
-        await self.client.close()
-        self.vector_db.save("vectors.pickle.gz")
+        if self.client:
+            await self.client.close()
+            self.client = None
+        if self.vector_db:
+            self.vector_db.save("vectors.pickle.gz")
 
     @classmethod
     async def create(cls):
-        cls.client = await aiosqlite.connect("database.db")
+        # Use WAL mode and set a longer timeout for better concurrency handling
+        cls.client = await aiosqlite.connect(
+            "database.db",
+            timeout=30.0,  # Increase timeout to 30 seconds
+            isolation_level=None  # This enables autocommit mode
+        )
+        await cls.client.execute("PRAGMA journal_mode=WAL")  # Use WAL mode for better concurrency
+        await cls.client.execute("PRAGMA busy_timeout=30000")  # Set busy timeout to 30 seconds
+        
         cls.documents = []
         cls.vector_db = HyperDB(cls.documents, key="embedding_text")
         try:

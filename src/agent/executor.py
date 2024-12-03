@@ -27,7 +27,7 @@ from src.utils.logging import agent_logger
 from src.world.context import WorldContext
 from src.web.discussion_tracker import DiscussionTracker
 
-from ..memory.base import SingleMemory
+from ..memory.base import SingleMemory, get_relevant_memories
 from ..tools.base import CustomTool, get_tools
 from ..tools.context import ToolContext
 from ..tools.name import ToolName
@@ -37,7 +37,7 @@ from ..utils.models import ChatModel
 from ..utils.parameters import DEFAULT_FAST_MODEL, DEFAULT_SMART_MODEL
 from ..utils.prompt import PromptString
 from .message import AgentMessage, MessageParsingError, get_conversation_history
-from .plans import PlanStatus, SinglePlan
+from .plans import SinglePlan, PlanStatus
 
 load_dotenv()
 
@@ -81,8 +81,8 @@ class CustomPromptTemplate(BaseChatPromptTemplate):
     tools: List[BaseTool]
 
     @override
-    def format_messages(self, **kwargs) -> str:
-        intermediate_steps = kwargs.pop("intermediate_steps")
+    def format_messages(self, **kwargs) -> List[HumanMessage]:
+        intermediate_steps = kwargs.pop("intermediate_steps", [])
         thoughts = ""
         for action, observation in intermediate_steps:
             thoughts += action.log
@@ -199,41 +199,97 @@ class PlanExecutorResponse(BaseModel):
     status: PlanStatus
     output: Optional[str] = None
     error: Optional[str] = None
+    scratchpad: Optional[str] = None
+    tool: Optional[CustomTool] = None
+    tool_input: Optional[str] = None
 
 class PlanExecutor:
     """Executes plans using available tools"""
 
-    def __init__(self, context: WorldContext):
+    def __init__(self, context: ToolContext):
         self.context = context
-        self.tools = get_tools(context)
-        self.prompt = CustomPromptTemplate(
-            template=PromptString.REACT_AGENT,
-            tools=self.tools,
-            input_variables=["input", "intermediate_steps", "tools", "tool_names"],
+        # Get available tools from location
+        location_id = context.context.get_agent_location_id(context.agent_id)
+        location_tools = context.context.get_location_from_location_id(location_id).get("available_tools", [])
+        
+        self.tools = get_tools(
+            tools=location_tools,
+            context=context.context,
+            agent_id=context.agent_id,
+            include_worldwide=True
         )
-        self.llm = ChatModel(DEFAULT_SMART_MODEL)
+        
+        # Initialize LLM and chain
+        llm = ChatModel(DEFAULT_SMART_MODEL)
+        self.prompt = CustomPromptTemplate(
+            template=str(PromptString.EXECUTE_PLAN.value),
+            tools=self.tools,
+            input_variables=[
+                "input",
+                "intermediate_steps",
+                "tools",
+                "tool_names",
+                "your_name",
+                "your_private_bio",
+                "relevant_memories",
+                "conversation_history"
+            ],
+        )
         self.output_parser = CustomOutputParser(tools=self.tools)
+        self.llm_chain = LLMChain(
+            llm=llm.defaultModel,  # Use the underlying OpenAI model
+            prompt=self.prompt
+        )
         self.agent = LLMSingleActionAgent(
-            llm_chain=LLMChain(llm=self.llm, prompt=self.prompt),
+            llm_chain=self.llm_chain,
             output_parser=self.output_parser,
             stop=["\nObservation:"],
             allowed_tools=[tool.name for tool in self.tools],
         )
 
     async def start_or_continue_plan(
-        self, plan: SinglePlan, conversation_history: Optional[str] = None
+        self, 
+        plan: SinglePlan,
+        tools: List[CustomTool]
     ) -> PlanExecutorResponse:
         """Start or continue executing a plan"""
         try:
-            # Format input for the agent
+            # Get agent info from context
+            agent_name = self.context.context.get_agent_full_name(self.context.agent_id)
+            agent_bio = self.context.context.get_agent_private_bio(self.context.agent_id)
+            agent_dict = self.context.context.get_agent_dict_from_id(self.context.agent_id)
+            
+            # Get memories from agent dict
+            memories = [SingleMemory(**m) for m in agent_dict.get("memories", [])]
+            
+            # Get relevant memories
+            relevant_memories = await get_relevant_memories(
+                plan.description,
+                memories=memories,
+                k=5
+            )
+            
+            # Get conversation history
+            conversation_history = await get_conversation_history(
+                self.context.agent_id,
+                self.context.context
+            )
+            
+            # Format input for the agent including tools
             agent_input = {
                 "input": plan.description,
-                "conversation_history": conversation_history or "",
+                "your_name": agent_name,
+                "your_private_bio": agent_bio,
+                "relevant_memories": "\n".join([m.description for m in relevant_memories]),
+                "conversation_history": conversation_history,
+                "tools": "\n".join([f"{tool.name}: {tool.description}" for tool in tools]),
+                "tool_names": ", ".join([tool.name for tool in tools]),
+                "intermediate_steps": []  # Initialize empty intermediate steps
             }
-            return await self.execute(self.tools, agent_input)
+            return await self.execute(tools, agent_input)
         except Exception as e:
             return PlanExecutorResponse(
-                status=PlanStatus.ERROR,
+                status=PlanStatus.FAILED,
                 error=f"Error executing plan: {str(e)}"
             )
 
@@ -245,32 +301,63 @@ class PlanExecutor:
     ) -> PlanExecutorResponse:
         """Execute the agent's plan"""
         try:
-            # Get conversation history
-            conversation_history = await get_conversation_history(self.context)
-            agent_input["conversation_history"] = conversation_history
-
             # Execute steps
             intermediate_steps = []
+            scratchpad = ""
+            last_tool = None
+            last_tool_input = None
+            
             for _ in range(max_iterations):
-                output = await self.agent.plan(intermediate_steps, **agent_input)
+                # Update intermediate steps in agent input
+                current_input = {**agent_input, "intermediate_steps": intermediate_steps}
                 
-                if isinstance(output, AgentFinish):
+                # Run the LLM chain directly
+                output = await self.llm_chain.apredict(**current_input)
+                action = self.output_parser.parse(output)
+                scratchpad += str(output)
+                
+                if isinstance(action, AgentFinish):
                     return PlanExecutorResponse(
-                        status=PlanStatus.COMPLETED,
-                        output=output.return_values["output"]
+                        status=PlanStatus.DONE,
+                        output=action.return_values["output"],
+                        scratchpad=scratchpad,
+                        tool=last_tool,
+                        tool_input=last_tool_input
                     )
                 
-                tool = next(t for t in tools if t.name.lower() == output.tool.lower())
-                observation = await tool.run(output.tool_input, ToolContext(self.context))
-                intermediate_steps.append((output, observation))
+                try:
+                    tool = next(t for t in tools if t.name.lower() == action.tool.lower())
+                    last_tool = tool
+                    last_tool_input = action.tool_input
+                    observation = await tool.run(action.tool_input, self.context)
+                    intermediate_steps.append((action, observation))
+                    scratchpad += f"\nObservation: {observation}\n"
+                except StopIteration:
+                    return PlanExecutorResponse(
+                        status=PlanStatus.FAILED,
+                        error=f"Tool not found: {action.tool}",
+                        scratchpad=scratchpad
+                    )
+                except Exception as tool_error:
+                    return PlanExecutorResponse(
+                        status=PlanStatus.FAILED,
+                        error=f"Tool execution error: {str(tool_error)}",
+                        scratchpad=scratchpad
+                    )
 
             return PlanExecutorResponse(
-                status=PlanStatus.ERROR,
-                error="Reached maximum number of iterations"
+                status=PlanStatus.IN_PROGRESS,
+                output="Reached maximum number of iterations",
+                scratchpad=scratchpad,
+                tool=last_tool,
+                tool_input=last_tool_input
             )
 
         except Exception as e:
             return PlanExecutorResponse(
-                status=PlanStatus.ERROR,
-                error=f"Error during execution: {str(e)}"
+                status=PlanStatus.FAILED,
+                error=f"Error during execution: {str(e)}",
+                scratchpad=scratchpad if 'scratchpad' in locals() else None,
+                tool=last_tool if 'last_tool' in locals() else None,
+                tool_input=last_tool_input if 'last_tool_input' in locals() else None
             )
