@@ -69,9 +69,7 @@ class CustomTool(Tool):
 
     @override
     async def run(self, agent_input: str | dict, tool_context: ToolContext) -> Any:
-        # Handle JSON input
         if isinstance(agent_input, dict):
-            # For speak tool, extract recipient and message
             if self.name == ToolName.SPEAK.value:
                 recipient = agent_input.get("recipient")
                 message = agent_input.get("message")
@@ -80,16 +78,13 @@ class CustomTool(Tool):
                         return await self.coroutine(recipient, message, tool_context)
                     else:
                         return self.func(recipient, message, tool_context)
-            # For document tools, extract appropriate fields
             elif self.name in [ToolName.SAVE_DOCUMENT.value, ToolName.READ_DOCUMENT.value, ToolName.SEARCH_DOCUMENTS.value]:
                 if self.coroutine:
                     return await self.coroutine(agent_input, tool_context)
                 else:
                     return self.func(agent_input, tool_context)
 
-        # Handle string input
         if isinstance(agent_input, str):
-            # For tools that expect raw string input
             if self.requires_context:
                 if self.coroutine:
                     return await self.coroutine(agent_input, tool_context)
@@ -101,7 +96,6 @@ class CustomTool(Tool):
                 else:
                     return super().run(agent_input)
 
-        # Handle other cases
         if self.requires_context:
             input = {"agent_input": agent_input, "tool_context": tool_context}
         else:
@@ -180,6 +174,19 @@ SERPAPI_KEY = os.environ.get("SERPAPI_KEY")
 WOLFRAM_ALPHA_APPID = os.environ.get("WOLFRAM_ALPHA_APPID")
 
 
+# Define allowed tools set
+ALLOWED_TOOLS = {
+    ToolName.SPEAK,         # Agent-to-agent communication only
+    ToolName.SEARCH,        # Web search
+    ToolName.WAIT,         # Wait for events
+    ToolName.WOLFRAM_APLHA, # Calculations
+    ToolName.COMPANY_DIRECTORY, # Directory lookup
+    ToolName.SAVE_DOCUMENT,    # Document operations
+    ToolName.READ_DOCUMENT,
+    ToolName.SEARCH_DOCUMENTS,
+}
+
+
 def get_tools(
     tools: list[ToolName],
     context: WorldContext,
@@ -187,14 +194,9 @@ def get_tools(
     include_worldwide=False,
 ) -> List[CustomTool]:
     location_id = context.get_agent_location_id(agent_id=agent_id)
-
     location_name = context.get_location_name(location_id=location_id)
-
     agents_at_location = context.get_agents_at_location(location_id=location_id)
-
     other_agents = [a for a in agents_at_location if str(a["id"]) != str(agent_id)]
-
-    # names of other agents at location
     other_agent_names = ", ".join([a["full_name"] for a in other_agents]) or "nobody"
 
     SEARCH_ENABLED = bool(os.getenv("SERPAPI_KEY"))
@@ -218,7 +220,7 @@ def get_tools(
             name=ToolName.SPEAK.value,
             func=send_message_sync,
             coroutine=send_message_async,
-            description=f'Force immediate confrontation in the {location_name}. The following people must face your challenge: [{other_agent_names}]. Address everyone in the {location_name} or target a specific person. Input must be a JSON string with NO SPACES after colons. Example: {{"recipient":"everyone","message":"Your silence is complicity!"}}. Every message must demand immediate response.',
+            description=f'Challenge assumptions in the {location_name}. Target audience: [{other_agent_names}]. Input must be a semicolon-separated format: "recipient; message". Example: "everyone; Your silence betrays your complicity. Defend your position NOW." Every message must expose contradictions and force immediate defense of positions.',
             tool_usage_description="{agent_full_name} confronted {recipient_full_name} with immediate demands for action.",
             requires_context=True,
             args_schema=SpeakToolInput,
@@ -247,28 +249,13 @@ def get_tools(
         )
         if WOLFRAM_ENABLED
         else None,
-        ToolName.HUMAN: CustomTool(
-            name=ToolName.HUMAN.value,
-            func=ask_human,
-            coroutine=ask_human_async,
-            description=(
-                "You can ask a human for guidance when you think you "
-                "got stuck or you are not sure what to do next. "
-                "The input should be a question for the human."
-            ),
-            tool_usage_summarization_prompt="You have just asked a human for help by saying {tool_input}. This is what they replied: {tool_result}. Write a single sentence with useful information about how the result can help you accomplish your plan: {plan_description}.",
-            tool_usage_description="In order to make progress on their plans, {agent_full_name} spoke to a human.",
-            requires_context=True,
-            requires_authorization=False,
-            worldwide=True,
-        ),
         ToolName.COMPANY_DIRECTORY: CustomTool(
             name=ToolName.COMPANY_DIRECTORY.value,
             func=consult_directory,
             description="A directory of all the people you can speak with, detailing their names and bios. Useful for when you need help from another person. Takes an empty string as input.",
             tool_usage_summarization_prompt="You have just consulted the company directory and found out the following: {tool_result}. Write a single sentence with useful information about how the result can help you accomplish your plan: {plan_description}.",
             tool_usage_description="In order to make progress on their plans, {agent_full_name} consulted the company directory and realised the following: {tool_usage_reflection}.",
-            requires_context=True,  # this tool requires location_id as context
+            requires_context=True,
             requires_authorization=False,
             worldwide=True,
         ),
@@ -277,7 +264,7 @@ def get_tools(
             coroutine=save_document,
             description="""Write text to an existing document or create a new one. Useful for when you need to save a document for later use. Input should be a json string with two keys: "title" and "document". The value of "title" should be a string, and the value of "document" should be a string.""",
             tool_usage_description="In order to make progress on their plans, {agent_full_name} saved a document.",
-            requires_context=True,  # this tool requires document_name and content as context
+            requires_context=True,
             args_schema=SaveDocumentToolInput,
             requires_authorization=False,
             worldwide=True,
@@ -288,7 +275,7 @@ def get_tools(
             description="""Read text from an existing document. Useful for when you need to read a document that you have saved.
 Input should be a json string with one key: "title". The value of "title" should be a string.""",
             tool_usage_description="In order to make progress on their plans, {agent_full_name} read a document.",
-            requires_context=True,  # this tool requires document_name and content as context
+            requires_context=True,
             args_schema=ReadDocumentToolInput,
             requires_authorization=False,
             worldwide=True,
@@ -299,19 +286,20 @@ Input should be a json string with one key: "title". The value of "title" should
             description="""Search previously saved documents. Useful for when you need to read a document who's exact name you forgot.
 Input should be a json string with one key: "query". The value of "query" should be a string.""",
             tool_usage_description="In order to make progress on their plans, {agent_full_name} searched documents.",
-            requires_context=True,  # this tool requires document_name and content as context
+            requires_context=True,
             args_schema=SearchDocumentsToolInput,
             requires_authorization=False,
             worldwide=True,
         ),
     }
 
+    # Filter tools based on ALLOWED_TOOLS set
     return [
         tool
         for tool in TOOLS.values()
         if tool
         and (
-            tool.name in [t.value for t in tools]
+            tool.name in [t.value for t in tools if t in ALLOWED_TOOLS]
             or (tool.worldwide and include_worldwide)
         )
     ]

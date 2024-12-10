@@ -20,7 +20,7 @@ from langchain.schema import (
     SystemMessage,
 )
 from langchain.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing_extensions import override
 
 from src.utils.logging import agent_logger
@@ -37,7 +37,6 @@ from ..utils.parameters import DEFAULT_FAST_MODEL, DEFAULT_SMART_MODEL
 from ..utils.prompt import PromptString
 from .message import AgentMessage, get_conversation_history
 from .plans import PlanStatus, SinglePlan
-from .parser_utils import MessageParser
 
 load_dotenv()
 
@@ -65,16 +64,75 @@ class CustomPromptTemplate(BaseChatPromptTemplate):
         return [HumanMessage(content=formatted)]
 
 
-class CustomOutputParser(AgentOutputParser, BaseModel):
-    tools: List[BaseTool] = Field(description="List of available tools")
-    _parser: Optional[MessageParser] = None
+class CustomOutputParser(AgentOutputParser):
+    tools: List[BaseTool]
 
-    def __init__(self, tools: List[BaseTool], **kwargs):
-        # Initialize Pydantic model fields
-        super().__init__(tools=tools, **kwargs)
-        # Initialize parser after model fields are set
-        if self._parser is None:
-            object.__setattr__(self, '_parser', MessageParser(tools=tools))
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.tools = kwargs.pop("tools")
+        # Create a mapping of normalized tool names to actual tool names
+        self.tool_names = {t.name.lower().strip(): t.name for t in self.tools}
+
+    def normalize_action(self, action: str) -> str:
+        """Normalize action name and validate it exists in available tools."""
+        # Clean and normalize the action name
+        normalized = action.lower().strip().replace(" ", "-")
+        
+        # Check if it's a valid tool name
+        if normalized in self.tool_names:
+            return self.tool_names[normalized]
+            
+        # If not found, try to recover from common patterns
+        if any(x in normalized for x in ["gpt", "llm", "openai", "language"]):
+            return "speak"  # Default to speak for LLM-related actions
+            
+        raise ValueError(f"Unknown action: {action}. Valid actions are: {', '.join(self.tool_names.values())}")
+
+    def extract_message(self, text: str) -> dict:
+        """Extract recipient and message from text with multiple fallback strategies."""
+        # Try JSON first
+        if text.strip().startswith('{'):
+            try:
+                data = json.loads(text)
+                if isinstance(data, dict) and 'recipient' in data and 'message' in data:
+                    return {
+                        'recipient': data['recipient'].strip(),
+                        'message': data['message'].strip()
+                    }
+            except:
+                pass
+
+        # Try newline split
+        parts = text.strip().split('\n', 1)
+        if len(parts) == 2:
+            return {
+                'recipient': parts[0].strip(),
+                'message': parts[1].strip()
+            }
+
+        # Try to find recipient in common patterns
+        patterns = [
+            r"(?:to|recipient|target):\s*([^\n]+)\s*(?:message|content)?:\s*(.*)",
+            r"([^:]+):\s*(.*)",
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, text, re.IGNORECASE | re.DOTALL)
+            if match:
+                return {
+                    'recipient': match.group(1).strip(),
+                    'message': match.group(2).strip()
+                }
+
+        # Last resort: look for name at start
+        words = text.strip().split()
+        if words:
+            return {
+                'recipient': words[0],
+                'message': ' '.join(words[1:]) if len(words) > 1 else text
+            }
+
+        raise ValueError("Could not extract recipient and message from input")
 
     def parse(self, llm_output: str) -> Union[AgentAction, AgentFinish]:
         if "Final Response:" in llm_output:
@@ -85,39 +143,27 @@ class CustomOutputParser(AgentOutputParser, BaseModel):
                 log=llm_output,
             )
 
-        try:
-            # Ensure parser is initialized
-            if self._parser is None:
-                object.__setattr__(self, '_parser', MessageParser(tools=self.tools))
-
-            # Try to extract action and input
-            action, action_input = self._parser.extract_action_input(llm_output)
-            
+        # Try to extract action and input
+        regex = r"Action\s*\d*\s*:(.*?)(?:Action\s*\d*\s*Input\s*\d*\s*:[\s]*)(.*?)(?=\n\s*(?:Observation|Action|$))"
+        match = re.search(regex, llm_output, re.DOTALL)
+        
+        if not match:
+            # If no match, try to extract a message from the output
             try:
-                # Normalize the action name
-                action = self._parser.normalize_action(action)
-            except ValueError:
-                # If action normalization fails, default to speak
-                action = "speak"
-                
-            # Handle speak action specially
-            if action == "speak":
-                try:
-                    action_input = self._parser.extract_message(action_input)
-                except ValueError as e:
-                    # If message extraction fails, try with the full output
-                    action_input = self._parser.extract_message(llm_output)
-            else:
-                # For other actions, try JSON first
-                try:
-                    action_input = json.loads(action_input)
-                except json.JSONDecodeError:
-                    action_input = action_input.strip(" ").strip('"')
+                # Look for common names in the text
+                text = llm_output.lower()
+                for name in ["tata", "gaia", "everyone"]:
+                    if name in text:
+                        message = self.extract_message(llm_output)
+                        return AgentAction(
+                            tool="speak",
+                            tool_input=message,
+                            log=llm_output
+                        )
+            except:
+                pass
 
-            return AgentAction(tool=action, tool_input=action_input, log=llm_output)
-            
-        except Exception as e:
-            # If all parsing fails, try to get formatting correction
+            # If extraction failed, try to get formatting correction
             llm = ChatModel(DEFAULT_FAST_MODEL)
             formatting_correction = (
                 f"Could not parse the LLM output: `{llm_output}`\n\n"
@@ -132,29 +178,44 @@ class CustomOutputParser(AgentOutputParser, BaseModel):
                 [SystemMessage(content=formatting_correction)]
             )
 
-            try:
-                # Ensure parser is initialized before retry
-                if self._parser is None:
-                    object.__setattr__(self, '_parser', MessageParser(tools=self.tools))
+            match = re.search(regex, retry, re.DOTALL)
+            if not match:
+                raise OutputParserException(
+                    f"Could not parse LLM output after retrying: \n`{retry}`. \nFirst attempt: \n`{llm_output}`"
+                )
 
-                action, action_input = self._parser.extract_action_input(retry)
-                action = self._parser.normalize_action(action)
-                if action == "speak":
-                    action_input = self._parser.extract_message(action_input)
-                return AgentAction(tool=action, tool_input=action_input, log=llm_output)
+        try:
+            # Get and normalize the action
+            action = self.normalize_action(match.group(1).strip())
+            action_input = match.group(2).strip()
+
+            # Handle speak action specially
+            if action == "speak":
+                return AgentAction(
+                    tool=action,
+                    tool_input=self.extract_message(action_input),
+                    log=llm_output
+                )
+
+            # For other actions, try JSON first
+            try:
+                action_input = json.loads(action_input)
+            except json.JSONDecodeError:
+                action_input = action_input.strip(" ").strip('"')
+
+            return AgentAction(tool=action, tool_input=action_input, log=llm_output)
+            
+        except Exception as e:
+            # Final fallback: try to extract any message-like content
+            try:
+                message = self.extract_message(llm_output)
+                return AgentAction(
+                    tool="speak",
+                    tool_input=message,
+                    log=llm_output
+                )
             except:
-                # Final fallback: try to extract any message-like content
-                try:
-                    message = self._parser.extract_message(llm_output)
-                    return AgentAction(
-                        tool="speak",
-                        tool_input=message,
-                        log=llm_output
-                    )
-                except:
-                    raise OutputParserException(
-                        f"Could not parse LLM output after retrying: \n`{retry}`. \nFirst attempt: \n`{llm_output}`"
-                    )
+                raise ValueError(f"Error processing output: {str(e)}")
 
     @override
     def get_format_instructions(self) -> str:

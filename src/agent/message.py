@@ -1,7 +1,7 @@
 import re
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+from typing import Optional, Union, Dict
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -39,7 +39,7 @@ class AgentMessage(BaseModel):
     @classmethod
     def from_agent_input(
         cls,
-        agent_input: str,
+        agent_input: Union[str, Dict[str, str]],
         agent_id: UUID,
         context: WorldContext,
         type: MessageEventSubtype = MessageEventSubtype.AGENT_TO_AGENT,
@@ -56,22 +56,35 @@ class AgentMessage(BaseModel):
         ][0]
 
         if type == MessageEventSubtype.AGENT_TO_AGENT:
-            # grab the recipient and content
-            recipient_name, content = agent_input.split(";")
+            # Handle both string and dict inputs
+            if isinstance(agent_input, dict):
+                recipient_name = agent_input.get("recipient", "").strip()
+                content = agent_input.get("message", "").strip()
+            else:
+                try:
+                    # Fallback to semicolon split for backwards compatibility
+                    parts = agent_input.split(";", 1)  # Split on first semicolon only
+                    if len(parts) != 2:
+                        raise ValueError("Invalid message format")
+                    recipient_name, content = parts
+                except Exception as e:
+                    raise ValueError(f"Could not parse message: {str(e)}")
 
             # remove the leading and trailing quotation marks if they exist
             content = content.strip().strip("'").strip('"')
+            recipient_name = recipient_name.strip()
 
-            if "everyone" in recipient_name:
+            if "everyone" in recipient_name.lower():
                 recipient_name = None
                 recipient_id = None
-
             else:
                 try:
-                    recipient_id = context.get_agent_id_from_name(recipient_name)
-
+                    # Handle multiple recipients by taking the first one
+                    first_recipient = recipient_name.split(";")[0].strip()
+                    recipient_id = context.get_agent_id_from_name(first_recipient)
+                    recipient_name = first_recipient
                 except Exception as e:
-                    raise Exception(e)
+                    raise Exception(f"Could not find agent with name: {recipient_name}")
 
             return cls(
                 content=content,
@@ -86,7 +99,7 @@ class AgentMessage(BaseModel):
             )
 
         return cls(
-            content=agent_input,
+            content=agent_input if isinstance(agent_input, str) else agent_input.get("message", ""),
             sender_id=agent_id,
             location=location,
             context=context,
@@ -114,26 +127,42 @@ class AgentMessage(BaseModel):
         )
 
         if event.subtype == MessageEventSubtype.AGENT_TO_AGENT:
-            # Handle both quoted and unquoted message formats
-            pattern = r"(?P<sender>[\w\s]+) said to (?P<recipient>[\w\s]+)(?: in the [\w\s]+)?: ['\"]*(?P<message>.*)['\"]*$"
+            # Handle both quoted and unquoted message formats, including multiple recipients
+            pattern = r"(?P<sender>[\w\s]+) said to (?P<recipient>[\w\s;]+)(?: in the [\w\s]+)?: ['\"]*(?P<message>.*)['\"]*$"
             match = re.search(pattern, event.description)
             if not match:
                 # If no match, try simpler pattern without quotes
-                pattern = r"(?P<sender>[\w\s]+) said to (?P<recipient>[\w\s]+)(?: in the [\w\s]+)?: (?P<message>.*)"
+                pattern = r"(?P<sender>[\w\s]+) said to (?P<recipient>[\w\s;]+)(?: in the [\w\s]+)?: (?P<message>.*)"
                 match = re.search(pattern, event.description)
                 if not match:
                     raise ValueError(f"Could not parse message: {event.description}")
             
             sender_name = match.group("sender").strip()
-            recipient = match.group("recipient").strip()
+            recipients = match.group("recipient").strip()
             content = match.group("message").strip().strip("'\"")
 
-            if "everyone" in recipient:
+            if "everyone" in recipients.lower():
                 recipient_name = None
                 recipient_id = None
             else:
-                recipient_name = recipient
-                recipient_id = context.get_agent_id_from_name(recipient_name)
+                # Handle multiple recipients by taking the first one
+                recipient_name = recipients.split(";")[0].strip()
+                try:
+                    recipient_id = context.get_agent_id_from_name(recipient_name)
+                except Exception:
+                    # If first recipient not found, try others
+                    recipient_found = False
+                    for recipient in recipients.split(";"):
+                        recipient = recipient.strip()
+                        try:
+                            recipient_id = context.get_agent_id_from_name(recipient)
+                            recipient_name = recipient
+                            recipient_found = True
+                            break
+                        except Exception:
+                            continue
+                    if not recipient_found:
+                        raise ValueError(f"Could not find any valid recipients in: {recipients}")
 
             return cls(
                 content=content,

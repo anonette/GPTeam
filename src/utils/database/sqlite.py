@@ -66,7 +66,6 @@ class SqliteDatabase(DatabaseProviderSingleton):
         ) as cursor:
             return await cursor.fetchall()
 
-    # needs testing
     async def get_by_field_contains(
         self, table: Tables, field: str, value: Any, limit: int = None
     ) -> list[dict[str, Any]]:
@@ -83,7 +82,6 @@ class SqliteDatabase(DatabaseProviderSingleton):
         ) as cursor:
             return await cursor.fetchall()
 
-    # needs testing
     async def get_memories_since(
         self, timestamp: datetime, agent_id: str
     ) -> list[dict[str, Any]]:
@@ -100,7 +98,6 @@ class SqliteDatabase(DatabaseProviderSingleton):
         ) as cursor:
             return await cursor.fetchall()
 
-    # needs testing
     async def get_recent_events(
         self, world_id: str, limit: int
     ) -> list[dict[str, Any]]:

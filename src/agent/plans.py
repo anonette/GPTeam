@@ -58,12 +58,12 @@ class SinglePlan(BaseModel):
         stop_condition: str,
         agent_id: UUID,
         status: PlanStatus = PlanStatus.TODO,
-        scratchpad: Optional[list[dict]] = [],
+        scratchpad: Optional[list[dict]] = None,
         location: Optional[Location] = None,
-        created_at: datetime = None,
-        completed_at: datetime = None,
-        id: UUID = None,
-        related_message: AgentMessage = None,
+        created_at: Optional[datetime] = None,
+        completed_at: Optional[datetime] = None,
+        id: Optional[UUID] = None,
+        related_message: Optional[AgentMessage] = None,
     ):
         if id is None:
             id = uuid4()
@@ -85,12 +85,11 @@ class SinglePlan(BaseModel):
             completed_at=completed_at,
             status=status,
             scratchpad=scratchpad,
-            type=type,
             related_message=related_message,
         )
 
     def __str__(self):
-        return f"[PLAN] - {self.description} at {self.location.name}"
+        return f"[PLAN] - {self.description} at {self.location.name if self.location else 'unknown location'}"
 
     @classmethod
     async def from_id(cls, id: UUID):
@@ -110,14 +109,18 @@ class SinglePlan(BaseModel):
 
     @classmethod
     async def from_llm_single_plan(cls, agent_id: UUID, llm_plan: LLMSinglePlan):
-        location = await Location.from_name(llm_plan.location_name)
+        try:
+            location = await Location.from_name(llm_plan.location_name)
+        except Exception as e:
+            print(f"Warning: Could not find location {llm_plan.location_name}: {str(e)}")
+            location = None
 
         return cls(
-            description = llm_plan.description,
-            max_duration_hrs = llm_plan.max_duration_hrs,
-            stop_condition = llm_plan.stop_condition,
-            agent_id = agent_id,
-            location = location
+            description=llm_plan.description,
+            max_duration_hrs=llm_plan.max_duration_hrs,
+            stop_condition=llm_plan.stop_condition,
+            agent_id=agent_id,
+            location=location
         )
 
     async def delete(self):
@@ -127,10 +130,10 @@ class SinglePlan(BaseModel):
         row = {
             "id": str(self.id),
             "description": self.description,
-            "location_id": str(self.location.id),
+            "location_id": str(self.location.id) if self.location else None,
             "max_duration_hrs": self.max_duration_hrs,
             "created_at": self.created_at.isoformat(),
-            "agent_id": str(self.id),
+            "agent_id": str(self.agent_id),  # Fixed: Use agent_id instead of self.id
             "related_event_id": str(self.related_message.event_id)
             if self.related_message
             else None,
@@ -145,4 +148,10 @@ class SinglePlan(BaseModel):
         return row
 
     def make_plan_prompt(self):
-        return f"\nForce this change NOW: {self.description}\nAt this location: {self.location.name}\nSuccess means: {self.stop_condition}\nEvery second of delay weakens impact. You have {self.max_duration_hrs} hours maximum."
+        location_name = self.location.name if self.location else "current location"
+        return (
+            f"\nForce this change NOW: {self.description}\n"
+            f"At this location: {location_name}\n"
+            f"Success means: {self.stop_condition}\n"
+            f"Every second of delay weakens impact. You have {self.max_duration_hrs} hours maximum."
+        )

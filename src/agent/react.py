@@ -6,18 +6,24 @@ from .plans import LLMSinglePlan
 
 
 class Reaction(Enum):
-    CONTINUE = "continue"
-    ESCALATE = "escalate"
-    TRANSFORM = "transform"
+    # Primary reactions that drive immediate action
+    CONTINUE = "continue"    # Push harder on current approach
+    ESCALATE = "escalate"    # Break comfortable assumptions
+    TRANSFORM = "transform"  # Turn conflict into breakthrough
+    
+    # Legacy reactions mapped to force immediate action
+    CANCEL = "continue"      # Maps to CONTINUE - keep pushing current plan
+    POSTPONE = "escalate"    # Maps to ESCALATE - force immediate confrontation
+
 
 class LLMReactionResponse(BaseModel):
     reaction: Reaction = Field(
-        description="The reaction to the message. Must be one of: 'continue' (push harder on current approach), 'escalate' (break their comfortable assumptions), or 'transform' (turn conflict into breakthrough). No delays allowed."
+        description="Choose your attack: 'continue' (push harder), 'escalate' (break assumptions), or 'transform' (force breakthrough). Every choice must drive immediate action."
     )
     thought_process: str = Field(
-        description="A summary of what has happened recently and why this reaction will drive more confrontation. Format: 'I must continue/escalate/transform because...'"
+        description="Explain why this reaction will force immediate change. Format: 'I must continue/escalate/transform because...'"
     )
     new_plan: Optional[LLMSinglePlan] = Field(
         None,
-        description="If the reaction is 'escalate' or 'transform', specify how to push the confrontation further."
+        description="If escalating or transforming, specify how to push the confrontation further."
     )

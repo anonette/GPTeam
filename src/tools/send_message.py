@@ -46,10 +46,9 @@ async def send_message_async(recipient: str, message: str, tool_context: ToolCon
 
     # Make an AgentMessage object
     try:
-        # Format input as "recipient; message" for AgentMessage
-        agent_input = f"{formatted_input['recipient']}; {formatted_input['message']}"
+        # Pass input directly as dictionary instead of semicolon-formatted string
         agent_message = AgentMessage.from_agent_input(
-            agent_input,
+            formatted_input,
             tool_context.agent_id, 
             tool_context.context,
             type=MessageEventSubtype.AGENT_TO_AGENT
@@ -95,10 +94,9 @@ def send_message_sync(recipient: str, message: str, tool_context: ToolContext):
     formatted_input = format_message_input(recipient, message)
 
     # Make an AgentMessage object
-    # Format input as "recipient; message" for AgentMessage
-    agent_input = f"{formatted_input['recipient']}; {formatted_input['message']}"
+    # Pass input directly as dictionary instead of semicolon-formatted string
     agent_message = AgentMessage.from_agent_input(
-        agent_input,
+        formatted_input,
         tool_context.agent_id, 
         tool_context.context,
         type=MessageEventSubtype.AGENT_TO_AGENT
