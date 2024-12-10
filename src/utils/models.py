@@ -13,6 +13,7 @@ from .cache import chat_json_cache, json_cache
 from .model_name import ChatModelName
 from .parameters import DEFAULT_FAST_MODEL, DEFAULT_SMART_MODEL
 from .spinner import Spinner
+from .logging import agent_logger
 
 load_dotenv()
 
@@ -50,7 +51,10 @@ class ChatModel:
     ):
         self.defaultModel = get_chat_model(default_model_name, **kwargs)
         self.backupModel = get_chat_model(backup_model_name, **kwargs)
-        print(f"Initialized ChatModel with default model: {default_model_name.value}, backup model: {backup_model_name.value}")
+        # Log model initialization at debug level instead of printing
+        agent_logger.debug(
+            f"Initialized ChatModel with default model: {default_model_name.value}, backup model: {backup_model_name.value}"
+        )
 
     @chat_json_cache(sleep_range=(0, 0))
     async def get_chat_completion(self, messages: list[BaseMessage], **kwargs) -> str:

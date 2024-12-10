@@ -69,22 +69,50 @@ class CustomTool(Tool):
 
     @override
     async def run(self, agent_input: str | dict, tool_context: ToolContext) -> Any:
-        # if the tool requires context
-        if self.requires_context:
-            input = (
-                {"agent_input": agent_input, "tool_context": tool_context}
-                if isinstance(agent_input, str)
-                else {**agent_input, "tool_context": tool_context}
-            )
-
-        else:
-            input = agent_input
-
         try:
+            # Handle JSON input
+            if isinstance(agent_input, dict):
+                # For speak tool, extract recipient and message
+                if self.name == ToolName.SPEAK.value:
+                    recipient = agent_input.get("recipient")
+                    message = agent_input.get("message")
+                    if recipient and message:
+                        if self.coroutine:
+                            return await self.coroutine(recipient, message, tool_context)
+                        else:
+                            return self.func(recipient, message, tool_context)
+                # For document tools, extract appropriate fields
+                elif self.name in [ToolName.SAVE_DOCUMENT.value, ToolName.READ_DOCUMENT.value, ToolName.SEARCH_DOCUMENTS.value]:
+                    if self.coroutine:
+                        return await self.coroutine(agent_input, tool_context)
+                    else:
+                        return self.func(agent_input, tool_context)
+
+            # Handle string input
+            if isinstance(agent_input, str):
+                # For tools that expect raw string input
+                if self.requires_context:
+                    if self.coroutine:
+                        return await self.coroutine(agent_input, tool_context)
+                    else:
+                        return self.func(agent_input, tool_context)
+                else:
+                    if self.coroutine:
+                        return await super().arun(agent_input)
+                    else:
+                        return super().run(agent_input)
+
+            # Handle other cases
+            if self.requires_context:
+                input = {"agent_input": agent_input, "tool_context": tool_context}
+            else:
+                input = agent_input
+
             if self.coroutine:
                 return await super().arun(input)
             else:
                 return super().run(input)
+
         except Exception as e:
             return f"Error: {e}"
 

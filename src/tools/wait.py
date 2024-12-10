@@ -17,9 +17,13 @@ class HasHappenedLLMResponse(BaseModel):
     )
 
 
-async def wait_async(agent_input: str, tool_context: ToolContext) -> str:
-    """Wait for a specified event to occur."""
-
+async def wait_async(event_description: str, tool_context: ToolContext) -> str:
+    """Wait for a specified event to occur.
+    
+    Args:
+        event_description: The event description to wait for
+        tool_context: The tool context containing memories
+    """
     # Get the memories
     memories = [f"{m.description} @ {m.created_at}" for m in tool_context.memories]
 
@@ -34,7 +38,7 @@ async def wait_async(agent_input: str, tool_context: ToolContext) -> str:
         PromptString.HAS_HAPPENED,
         {
             "memory_descriptions": "-" + "\n-".join(memories),
-            "event_description": agent_input,
+            "event_description": event_description,
             "format_instructions": parser.get_format_instructions(),
         },
     )
@@ -54,7 +58,11 @@ async def wait_async(agent_input: str, tool_context: ToolContext) -> str:
         return "The event I was waiting for has not happened yet. Waiting..."
 
 
-def wait_sync(agent_input: str, tool_context: ToolContext) -> str:
-    """Wait for a specified event to occur."""
-
+def wait_sync(event_description: str, tool_context: ToolContext) -> str:
+    """Wait for a specified event to occur.
+    
+    Args:
+        event_description: The event description to wait for
+        tool_context: The tool context containing memories
+    """
     raise NotImplementedError("This tool is not implemented in sync mode")

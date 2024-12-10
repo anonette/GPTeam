@@ -5,17 +5,21 @@ from src.utils.database.base import Tables
 from src.utils.database.client import get_database
 from src.utils.embeddings import get_embedding
 
-# pydantic model for the document tool
-
 
 class SaveDocumentToolInput(BaseModel):
     """Input for the document tool."""
-
     title: str = Field(..., description="name of file")
     document: str = Field(..., description="content of file")
 
 
 async def save_document(title: str, document: str, tool_context: ToolContext):
+    """Save a document to the database.
+    
+    Args:
+        title: The document title
+        document: The document content
+        tool_context: The tool context
+    """
     normalized_title = title.lower().strip().replace(" ", "_")
 
     await (await get_database()).insert_document_with_embedding(
@@ -34,11 +38,16 @@ async def save_document(title: str, document: str, tool_context: ToolContext):
 
 class ReadDocumentToolInput(BaseModel):
     """Input for the document tool."""
-
     title: str = Field(..., description="name of file")
 
 
 async def read_document(title: str, tool_context: ToolContext):
+    """Read a document from the database.
+    
+    Args:
+        title: The document title
+        tool_context: The tool context
+    """
     normalized_title = title.lower().strip().replace(" ", "_")
     try:
         document = (
@@ -55,11 +64,16 @@ Content:
 
 class SearchDocumentsToolInput(BaseModel):
     """Input for the document tool."""
-
     query: str = Field(..., description="document query")
 
 
 async def search_documents(query: str, tool_context: ToolContext):
+    """Search for documents in the database.
+    
+    Args:
+        query: The search query
+        tool_context: The tool context
+    """
     # documents = await (await get_database()).search_document_embeddings(query, 10)
     if True:
         return f"No documents found for query: {query}"

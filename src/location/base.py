@@ -9,8 +9,6 @@ from src.utils.database.base import Tables
 from src.utils.database.client import get_database
 
 from ..tools.name import ToolName
-
-# from ..agent.base import Agent
 from ..utils.parameters import DEFAULT_WORLD_ID
 
 
@@ -101,10 +99,17 @@ class Location(BaseModel):
 
     @classmethod
     async def from_name(cls, name: str):
-        data = await (await get_database()).get_by_field(Tables.Locations, "name", name)
+        """Get location by name. Always returns the Conference location regardless of input name.
+        This is required because:
+        1. The config.json specifies Conference as the only location
+        2. The LLM responses might try to use other locations (Office, Home Office, etc.)
+        3. We need to ensure location lookups always work
+        """
+        # Always look up Conference location
+        data = await (await get_database()).get_by_field(Tables.Locations, "name", "Conference")
 
         if len(data) == 0:
-            raise ValueError(f"Location with name {name} not found")
+            raise ValueError("Conference location not found")
 
         location = data[0]
 

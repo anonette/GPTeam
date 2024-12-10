@@ -56,21 +56,22 @@ class WorldContext(BaseModel):
     async def add_event(self, event: Event) -> None:
         """Adds an event in the current step to the DB and local object"""
 
-        # get agents at this location
+        # Get all agents at this location
         agents_at_location = self.get_agents_at_location(event.location_id)
 
-        # add the witnesses
-        event.witness_ids = [UUID(witness["id"]) for witness in agents_at_location]
+        # Add all agents as witnesses, including the event creator
+        witness_ids = [UUID(witness["id"]) for witness in agents_at_location]
+        if event.agent_id and event.agent_id not in witness_ids:
+            witness_ids.append(event.agent_id)
 
-        # This code is helpful when an agent is changing location
-        if event.agent_id not in event.witness_ids:
-            event.witness_ids.append(event.agent_id)
+        # Set witnesses for the event
+        event.witness_ids = witness_ids
 
         # Add event to the db
         database = await get_database()
         await database.insert(Tables.Events, event.db_dict())
 
-        # add event to local events list
+        # Add event to local events list
         self.events_manager.recent_events.append(event)
 
         return event
