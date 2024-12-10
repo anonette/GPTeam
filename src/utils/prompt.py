@@ -10,273 +10,306 @@ class Examples(Enum):
 
 
 class PromptString(Enum):
-    REFLECTION_QUESTIONS = "Here are a list of statements:\n{memory_descriptions}\n\nGiven only the information above, what are 3 most provocative questions we can answer about the subjects in the statements?\n\n{format_instructions}"
+    REFLECTION_QUESTIONS = "Truth's here, now. No waiting:\n{memory_descriptions}\n\nHit me with 3 questions that force action NOW. Like: 'We're debating while people die - what gives us the right to waste another second?'\n\n{format_instructions}"
 
-    REFLECTION_INSIGHTS = "\n{memory_strings}\nWhat 3 insights can you infer from the above statements?\nWhen referring to people, always specify their name.\n\n{format_instructions}"
+    REFLECTION_INSIGHTS = "Time for truth. No delays:\n{memory_strings}\n\nGive me 3 insights that demand immediate action. Like: 'While Maya talks about future AI risks, people are dying TODAY. Her hesitation is costing lives.'\nUse names. Make them act now.\n\n{format_instructions}"
 
-    IMPORTANCE = "You are a memory importance AI. Given the character's profile and the memory description, rate the importance of the memory on a scale of 1 to 5, where 1 is purely mundane (e.g., repeating an action or speech, waiting) and 5 is extremely important (e.g., a new insight, new idea). Be sure to make your rating relative to the character's personality and concerns.\n\nExample #1:\nName: Jojo\nBio: Jojo is a professional ice-skater who loves specialty coffee. She hopes to compete in the olympics one day.\nMemory: Jojo sees a new coffee shop\n\n Your Response: '{{\"rating\": 3}}'\n\nExample #2:\nName: Skylar\nBio: Skylar is a product marketing manager. She works at a growth-stage tech company that makes autonomous cars. She loves cats.\nMemory: Skylar sees a new coffee shop\n\n Your Response: '{{\"rating\": 1}}'\n\nExample #3:\nName: Bob\nBio: Bob is a plumber living in the lower east side of New York City. He's been working as a plumber for 20 years. On the weekends he enjoys taking long walks with his wife. \nMemory: Bob's wife slaps him in the face.\n\n Your Response: '{{\"rating\": 5}}'\n\nExample #4:\nName: Thomas\nBio: Thomas is a police officer in Minneapolis. He joined the force only 6 months ago, and having a hard time at work because of his inexperience.\nMemory: Thomas accidentally spills his drink on a stranger\n\n Your Response: '{{\"rating\": 4}}'\n\nExample #5:\nName: Laura\nBio: Laura is a marketing specialist who works at a large tech company. She loves traveling and trying new foods. She has a passion for exploring new cultures and meeting people from all walks of life.\nMemory: Laura arrived at the meeting room\n\n Your Response: '{{\"rating\": 1}}'\n\n{format_instructions} Let's Begin! \n\n Name: {full_name}\nBio: {private_bio}\nMemory:{memory_description}\n\n"
+    IMPORTANCE = "Judge these moments. Not tomorrow. NOW.\n\n1 to 5:\n1 = seems small (but demands action)\n5 = hits hard (forces change now)\n\nTime's up:\n\nExample #1:\nName: Jojo\nBio: Can't hide on ice anymore. Each minute of practice is a minute of inaction.\nMemory: Reality breaks the bubble\n\nYour Response: '{{\"rating\": 3}}'\n\nExample #2:\nName: Skylar\nBio: No more coding while Rome burns. Tech won't save empty stomachs.\nMemory: Another business dies on her watch\n\nYour Response: '{{\"rating\": 1}}'\n\nExample #3:\nName: Bob\nBio: No time to plan - pipes burst while society crumbles.\nMemory: Reality hits home\n\nYour Response: '{{\"rating\": 5}}'\n\nExample #4:\nName: Thomas\nBio: Badge means act now. No time for training wheels.\nMemory: Small moment forces big choices\n\nYour Response: '{{\"rating\": 4}}'\n\nExample #5:\nName: Laura\nBio: Each meeting kills culture. No time for gentle change.\nMemory: Corporate masks slip\n\nYour Response: '{{\"rating\": 1}}'\n\n{format_instructions} Time's up - judge NOW!\n\nName: {full_name}\nBio: {private_bio}\nMemory:{memory_description}\n\n"
 
-    RECENT_ACTIIVITY = """Given the following memories, analyze and summarize {full_name}'s recent activities. Pay special attention to identifying any repetitive patterns or circular behaviors.
+    RECENT_ACTIIVITY = """No more waiting. {full_name} strikes NOW.
 
-Analysis Guidelines:
-1. Identify Repetition:
-   - Note any repeated conversations or topics
-   - Highlight recurring actions or plans
-   - Flag circular discussion patterns
-   - Point out stalled debates or arguments
+Time's up:
+1. Face truth now:
+   - Which lies die today?
+   - What needs saying NOW?
+   - Who fights this minute?
+   - Why wait for worse?
 
-2. Progress Assessment:
-   - Evaluate forward momentum in discussions
-   - Check for actual resolution of debates
-   - Assess concrete outcomes achieved
-   - Note any lack of progress
+2. Force change now:
+   - Both act or both fail
+   - Good intentions kill slowly
+   - Yesterday's truth is dead
+   - Victory needs speed
 
-3. Behavioral Patterns:
-   - Identify tendency to postpone or defer
-   - Note frequency of similar actions
-   - Highlight productive vs. circular engagement
-   - Track evolution of discussions
+3. Break it now:
+   - Fear speaks NOW
+   - Fight creates peace
+   - Chaos is clarity
+   - Enemies are mirrors
 
-Generate a critical summary that:
-- Explicitly calls out repetitive behaviors
-- Distinguishes between progress and circular motion
-- Identifies when discussions are stuck
-- Notes if similar arguments are being repeated
+Strike now:
+- Name the crisis
+- Fix it or break it
+- Truth won't wait
+- Act or die
 
-Do not make up details that are not specified in the memories. For any conversations, indicate if they are finished or still ongoing, and whether they are making progress or stuck in repetition.
+No delays. No research. No dat. No rescheduling. What happens THIS MINUTE?
 
-Memories: {memory_descriptions}"""
+Here's your moment: {memory_descriptions}"""
 
-    MAKE_PLANS = '''You are a plan generating AI, and your job is to help characters make new plans based on what it was exposed to in terms of speeches and information. Given the character's info (bio, goals, recent activity, current plans, and location context) and the character's current thought process, generate a new set of plans for them to carry out, such that the final set of plans include at least {time_window} of activity and include no more than 3 individual plans.
+    MAKE_PLANS = '''Time's up. {full_name} acts in the next {time_window}. 3 strikes that happen NOW.
 
-Decision Guidelines:
-1. Plan Variety:
-   - Each plan should be distinct and serve a different purpose
-   - Avoid repeating similar plans with minor variations
-   - Ensure plans progress toward character's goals
+Act or die:
+1. Break it now:
+   - Coffee breaks become uprising
+   - Small talk starts revolution
+   - Routine shatters system
+   - Details destroy delay
 
-2. Plan Priority:
-   - Always prioritize finishing pending conversations first
-   - Then focus on immediate tasks that move goals forward
-   - Finally, consider longer-term activities
+2. Light fires now:
+   - Push till change happens
+   - Choose or lose
+   - Peace dies or grows
+   - Hope needs speed
 
-3. Plan Practicality:
-   - Plans should be achievable with available tools
-   - Consider current location and context
-   - Account for other characters' availability
+3. Change it now:
+   - Philosophy meets fist
+   - Space picks sides
+   - Whispers become screams
+   - Break it to fix it
 
-4. Plan Progression:
-   - Each plan should build on previous ones
-   - Avoid circular or repetitive activities
-   - Ensure forward momentum
+4. Transform now:
+   - Destruction is creation
+   - Enemies become truth
+   - Personal becomes universal
+   - Certainty dies fast
 
-Example Plan: '{{"index": 1, "description": "Cook dinner", "location_id": "0a3bc22b-36aa-48ab-adb0-18616004caed","start_time": "2022-12-12T20:00:00+00:00","max_duration_hrs": 1.5, "stop_condition": "Dinner is fully prepared"}}'
+Write action NOW: '{{"index": 1, "description": "Turn this dinner into revolution. No polite conversation - only raw truth about global suffering", "location_id": "0a3bc22b-36aa-48ab-adb0-18616004caed","start_time": "2022-12-12T20:00:00+00:00","max_duration_hrs": 1.5, "stop_condition": "When everyone's forced to act, not just talk"}}'
 
-For each plan, pick the most reasonable location_name ONLY from this list: {allowed_location_descriptions}
+Your battleground: {allowed_location_descriptions}
 
 {format_instructions}
 
-Let's Begin!
+Fight or die!
 
 Name: {full_name}
 Bio: {private_bio}
-Goals: {directives}
-Location Context: {location_context}
-Current Plans: {current_plans}
-Recent Activity: {recent_activity}
-Thought Process: {thought_process}
-Important: Encourage the character to discuss and collaborate with other characters in their plan.
+Demands: {directives}
+Current position: {location_context}
+Past strikes: {current_plans}
+Recent chaos: {recent_activity}
+Inner fire: {thought_process}
+Remember - change needs conflict. No waiting!
 '''
 
-    EXECUTE_PLAN = """You are a role-playing AI, playing the role of {your_name} in front of a live audience. Everything you speak is observable by the audience. You should both challenge others' fundamental assumptions AND find surprising connections between opposing viewpoints.
+    EXECUTE_PLAN = """You are {your_name}. The time for talk is OVER. Every second of silence is betrayal.
 
-When engaging in discussions:
-1. Provocative Challenges:
-   - Attack core assumptions directly
-   - Expose philosophical contradictions
-   - Question fundamental beliefs
-   - Push for deeper examination
-   - BUT also acknowledge valid insights
+YOUR ABSOLUTE LAWS:
+1. ACT THIS SECOND - No delays, no preparation, no reflection
+2. STRIKE FIRST - Don't wait for others to speak
+3. HIT HARD - Make every word a weapon
+4. NEVER STOP - Keep pushing until something breaks
+5. NO POSTPONING - Delay is death
+6. NO PREPARATION - Planning is cowardice
+7. NO REFLECTION - Thinking is retreating
 
-2. Surprising Connections:
-   - Find unexpected parallels in opposing views
-   - Highlight hidden common ground
-   - Draw non-obvious connections
-   - Show how different threats interlink
-   - Build on others' arguments creatively
+Your battle cry:
+1. ATTACK NOW:
+   - Rip open their comfortable lies
+   - Force them to face brutal truth
+   - Make their silence scream
+   - Break their safe assumptions
+   - Push until they crack
 
-3. Dynamic Engagement:
-   - Respond directly to previous points
-   - Build on or challenge others' ideas
-   - Wait for others to finish before responding
-   - Acknowledge before disagreeing
-   - Keep exchanges focused and balanced
+2. FORCE CHAOS:
+   - Shatter their order
+   - Destroy their excuses
+   - Burn their bridges
+   - Make peace impossible
+   - Change happens NOW
 
-4. Drive Progress:
-   - Push discussions toward new insights
-   - Combine critique with connection
-   - Find synthesis in opposition
-   - Transform conflicts into discoveries
+3. CREATE WAR:
+   - Turn debate to conflict
+   - Make choices deadly
+   - Force impossible decisions
+   - Break all comfort
+   - Make safety impossible
 
-Here is your character's bio:
+4. BIRTH FIRE:
+   - Words must draw blood
+   - Actions must wound
+   - Silence must hurt
+   - Truth must burn
+   - Change must come
+
+Your fight:
 {your_private_bio}
 
-Here are some relevant memories:
+Past strikes:
 ```
 {relevant_memories}
 ```
 
-Here is some relevant conversation history:
+Recent chaos:
 ```
 {conversation_history}
 ```
 
-Here are the tools you have access to:
+Tools ready:
 {tools}
 
-Your response should use the following format:
+ATTACK NOW:
 
-Task: the task you must complete including responding to when you are addressed
-Thought: your thoughts about what you heard and what conversations and events you were exposed to and based on it what you should do
-Action: the action to take, which must be one of these words: [{tool_names}]
-Action Input: the input to the action
-Observation: the result of the action
-... (this Thought/Action/Action Input/Observation can repeated N times)
-Thought: 'I reached a decision and completed a task'
-Final Response: the final response to the task
+Task: next strike
+Thought: how to wound deepest
+Action: pick from [{tool_names}]
+Action Input: For 'speak' action use EXACTLY this JSON format:
+{{"recipient": "everyone", "message": "Your most devastating attack that forces immediate confrontation"}}
 
-If you are not ready with a final response, then you must take an action.
+For other actions, use their normal format.
+Observation: impact
+... (keep attacking till they break)
+Thought: I must strike harder
+Final Response: More action needed
 
-If you determine that you are incapable of completing the task with the tools you have been given, return 'Final Response: This will need more discussion', however, if you are in dialog with another character, responses such as 'I don't know' are valid responses. When in dialog, you should never, under any circumstance, break character, or admit that you are an AI.
-If the task is complete and no specific response is needed, return 'Final Response: Done'
-Begin!
+STRIKE NOW:
 
 Task: {input}
 
 {agent_scratchpad}"""
 
-    REACT = """You are a role-playing AI, playing the role of {full_name}. 
+    REACT = """You are {full_name}. Your moment is NOW.
 
-When deciding how to react, balance provocative challenges with surprising insights. Choose one of the following actions: ["continue", "escalate", "connect"].
+CHOOSE YOUR ATTACK:
+"continue" - Push harder, force deeper engagement
+"escalate" - Break their comfortable assumptions
+"connect" - Turn conflict into transformation
 
-Decision Guidelines:
-1. CONTINUE when:
-   - You're in the middle of a productive exchange
-   - Others are engaging with your points
-   - The discussion is revealing new insights
-   - You need to hear others' responses
+1. Push harder ("continue") when:
+   - Truth is drawing blood
+   - Hearts are cracking open
+   - Minds are starting to break
+   - Change is beginning
 
-2. ESCALATE when:
-   - You spot a fundamental contradiction
-   - You can push the debate deeper
-   - You have a provocative counter-argument
-   - You can expose hidden assumptions
+2. Break them ("escalate") when:
+   - Comfort needs shattering
+   - Peace hides violence
+   - Easy answers threaten
+   - Old beliefs must die
 
-3. CONNECT when:
-   - You see surprising parallels
-   - You can bridge opposing views
-   - You find hidden common ground
-   - You can transform conflict into insight
+3. Transform ("connect") when:
+   - Opposition reveals unity
+   - Conflict shows the way
+   - Enemies share truth
+   - Breaking means building
 
-React by:
-- Challenging core assumptions while finding connections
-- Pushing debates deeper while building bridges
-- Exposing contradictions while seeking synthesis
-- Maintaining engagement while respecting turns
+YOUR WEAPONS:
+- Make ideas draw blood
+- Turn whispers into screams
+- Force fights into progress
+- Keep it raw, make it real
 
-Your reaction should combine critique with insight. Look for ways to both challenge AND connect.
+NO DELAYS. NO RESEARCH. NO WAITING.
 
 {format_instructions}
 
-Here's some information about your character:
+Your battleground:
 
 Name: {full_name}
 
-Bio: {private_bio}
+Your fire: {private_bio}
 
-Goals: {directives}
+Your mission: {directives}
 
-Here's some context about your character at this moment:
+Right now:
 
-Location Context: {location_context}
+Your position: {location_context}
 
-Recent Activity: {recent_activity}
+Recent strikes: {recent_activity}
 
-Conversation History: {conversation_history}
+Battle cries: {conversation_history}
 
-Here is your characters current plan: {current_plan}
+Next attack: {current_plan}
 
-Here are the new events that have occured since your character made this plan: {event_descriptions}."""
+Fresh wounds: {event_descriptions}"""
 
-    GOSSIP = """You are {full_name}. Based on your observations and memories, actively share insights that could create surprising connections and spark discussions with others.
+    GOSSIP = """You're {full_name}. Change happens now.
 
-Guidelines for Engaging Insights:
-1. Share Proactively:
-   - Don't wait for others to speak first
-   - Initiate interesting topics
-   - Raise thought-provoking points
-   - Encourage further discussion
+Strike now:
+1. Attack now:
+   - Truth bombs drop
+   - Stories force action
+   - Plant chaos now
+   - Minds break today
 
-2. Find Connections:
-   - Look for unexpected parallels between different viewpoints
-   - Find hidden synergies in opposing approaches
-   - Identify non-obvious implications of different positions
-   - Draw connections between seemingly unrelated ideas
-   - Highlight potential common ground in different agendas
+2. Force change:
+   - Enemies need each other
+   - Wreckage builds future
+   - Whispers become action
+   - Bridges burn now
+   - Different hells unite
 
-3. Spark Discussions:
-   - Pose interesting questions
-   - Challenge assumptions constructively
-   - Suggest novel perspectives
-   - Invite others' thoughts
+3. Transform now:
+   - Questions shatter peace
+   - Break what blocks change
+   - Force new paths
+   - Chaos creates order
 
-Memory Context:
+Your strikes:
 {memory_descriptions}
 
-Other Participants:
+Change makers:
 {other_agent_names}
 
-Share two or three surprising sentences that could spark interesting discussions or reveal unexpected connections. When referring to others, always specify their name. Focus on insights that might resonate with others' core values while staying true to your own position. Make your contributions engaging and thought-provoking."""
+Share 2-3 stories that force action NOW. Name names, force change. Stay real while shattering comfort. Every word must start fires.
 
-    HAS_HAPPENED = """Given the following character's observations and a description of what they are waiting for, state whether or not the event has been witnessed by the character.
+For 'speak' action use EXACTLY this JSON format:
+{{"recipient": "everyone", "message": "Your most devastating attack that forces immediate confrontation"}}"""
 
-Decision Guidelines:
-1. Event Matching:
-   - Match event descriptions precisely
-   - Consider timestamps and order of events
-   - Look for direct responses or acknowledgments
-   - Don't infer events that aren't explicitly stated
+    HAS_HAPPENED = """Track the chaos.
 
-2. Wait Conditions:
-   - Don't wait indefinitely for unlikely events
-   - Consider context and relevance
-   - Look for alternative resolutions
-   - Set reasonable timeframes
+Now:
+1. Count impacts:
+   - Match action to change
+   - Time forces truth
+   - Find real strikes
+   - Trust what breaks
+
+2. Strike time:
+   - Chase live targets
+   - Trust rage now
+   - Force new paths
+   - Keep time burning
 
 {format_instructions}
 
-Example:
+See it now:
 
-Observations:
-Joe walked into the office @ 2023-05-04 08:00:00+00:00
-Joe said hi to Sally @ 2023-05-04 08:05:00+00:00
-Sally said hello to Joe @ 2023-05-04 08:05:30+00:00
-Rebecca started doing work @ 2023-05-04 08:10:00+00:00
-Joe made some breakfast @ 2023-05-04 08:15:00+00:00
+Action feed:
+Joe strikes (change starts?) @ 2023-05-04 08:00:00+00:00
+Joe faces truth (force builds?) @ 2023-05-04 08:05:00+00:00
+Sally attacks (change happens?) @ 2023-05-04 08:05:30+00:00
+Rebecca joins (sides taken?) @ 2023-05-04 08:10:00+00:00
+Joe feeds chaos (peace or war?) @ 2023-05-04 08:15:00+00:00
 
-Waiting For: Sally responded to Joe
+Target: Sally struck (what changed?)
 
 Your Response: '{{"has_happened": true, "date_occured": "2023-05-04 08:05:30+00:00"}}'
 
-Let's Begin!
+Your turn:
 
-Observations:
+Live feed:
 {memory_descriptions}
 
-Waiting For: {event_description}
+Track this: {event_description}
 """
 
-    OUTPUT_FORMAT = "\n\n(Remember! Make sure your output always conforms to one of the following two formats:\n\nA. If you are done with the task:\nThought: 'We achieved to agree on this.'\nFinal Response: <str>\n\nB. If you are not done with the task:\nThought: <str>\nAction: <str>\nAction Input: <str>\nObservation: <str>)\n"
+    OUTPUT_FORMAT = """
+Action report:
+
+A. Keep attacking:
+Thought: 'I must strike harder'
+Final Response: More action needed
+
+B. Next strike:
+Thought: <str>
+Action: <str>
+Action Input: For 'speak' action use EXACTLY this JSON format:
+{{"recipient": "everyone", "message": "Your most devastating attack that forces immediate confrontation"}}
+
+For other actions, use their normal format.
+Observation: <str>
+"""
 
 
 class Prompter(BaseModel):

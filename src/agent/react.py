@@ -7,18 +7,17 @@ from .plans import LLMSinglePlan
 
 class Reaction(Enum):
     CONTINUE = "continue"
-    POSTPONE = "postpone"
-    CANCEL = "cancel"
+    ESCALATE = "escalate"
+    TRANSFORM = "transform"
 
 class LLMReactionResponse(BaseModel):
     reaction: Reaction = Field(
-        description="The reaction to the message. Must be one of 'continue', 'postpone', or 'cancel'. Do not provide anything else."
+        description="The reaction to the message. Must be one of: 'continue' (push harder on current approach), 'escalate' (break their comfortable assumptions), or 'transform' (turn conflict into breakthrough). No delays allowed."
     )
     thought_process: str = Field(
-        description="A summary of what has happened recently, why the reaction was chosen, and, if applicable, what should be done instead of the current plan. Phrased in this format: 'I should continue/postpone/cancel my plan because ...'"
+        description="A summary of what has happened recently and why this reaction will drive more confrontation. Format: 'I must continue/escalate/transform because...'"
     )
     new_plan: Optional[LLMSinglePlan] = Field(
         None,
-        description="If the reaction is 'postpone', this field should be included to specify what the new plan should be."
+        description="If the reaction is 'escalate' or 'transform', specify how to push the confrontation further."
     )
-

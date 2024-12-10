@@ -21,21 +21,21 @@ class PlanStatus(Enum):
 
 class LLMSinglePlan(BaseModel):
     index: int = Field(description="The plan number")
-    description: str = Field(description="A description of the plan")
-    start_time: datetime = Field(description="The starting time, in UTC, of the plan")
-    stop_condition: str = Field(
-        description="The condition that will cause this plan to be completed"
+    description: str = Field(description="A confrontational action that forces immediate engagement. No scheduling or follow-ups allowed.")
+    location_name: str = Field(
+        description="The name of the location where this confrontation happens NOW. Must match the location name exactly."
     )
     max_duration_hrs: float = Field(
-        description="The maximum amount of time to spend on this activity before reassessing"
+        default=0.5,
+        description="Maximum time is 30 minutes. Every moment of delay weakens impact."
     )
-    location_name: str = Field(
-        description="The name of the location. Must match the location name exactly."
+    stop_condition: str = Field(
+        description="The immediate impact that proves you've forced change. Must be observable NOW, not in the future."
     )
 
 
 class LLMPlanResponse(BaseModel):
-    plans: list[LLMSinglePlan] = Field(description="A numbered list of plans")
+    plans: list[LLMSinglePlan] = Field(description="A list of immediate confrontational actions. No scheduling or follow-ups allowed.")
 
 
 class SinglePlan(BaseModel):
@@ -145,6 +145,4 @@ class SinglePlan(BaseModel):
         return row
 
     def make_plan_prompt(self):
-        return f"\nDo this: {self.description}\nAt this location: {self.location.name}\nStop when this happens: {self.stop_condition}\nIf do not finish within {self.max_duration_hrs} hours, stop."
-
-
+        return f"\nForce this change NOW: {self.description}\nAt this location: {self.location.name}\nSuccess means: {self.stop_condition}\nEvery second of delay weakens impact. You have {self.max_duration_hrs} hours maximum."

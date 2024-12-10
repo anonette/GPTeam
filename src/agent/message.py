@@ -114,14 +114,25 @@ class AgentMessage(BaseModel):
         )
 
         if event.subtype == MessageEventSubtype.AGENT_TO_AGENT:
-            pattern = r"(?P<sender>[\w\s]+) said to (?P<recipient>[\w\s]+): [\"'](?P<message>.*)[\"']"
-            sender_name, recipient, content = re.findall(pattern, event.description)[0]
+            # Handle both quoted and unquoted message formats
+            pattern = r"(?P<sender>[\w\s]+) said to (?P<recipient>[\w\s]+)(?: in the [\w\s]+)?: ['\"]*(?P<message>.*)['\"]*$"
+            match = re.search(pattern, event.description)
+            if not match:
+                # If no match, try simpler pattern without quotes
+                pattern = r"(?P<sender>[\w\s]+) said to (?P<recipient>[\w\s]+)(?: in the [\w\s]+)?: (?P<message>.*)"
+                match = re.search(pattern, event.description)
+                if not match:
+                    raise ValueError(f"Could not parse message: {event.description}")
+            
+            sender_name = match.group("sender").strip()
+            recipient = match.group("recipient").strip()
+            content = match.group("message").strip().strip("'\"")
 
             if "everyone" in recipient:
                 recipient_name = None
                 recipient_id = None
             else:
-                recipient_name = recipient.strip()
+                recipient_name = recipient
                 recipient_id = context.get_agent_id_from_name(recipient_name)
 
             return cls(
@@ -158,9 +169,13 @@ class AgentMessage(BaseModel):
             )
 
         elif event.subtype == MessageEventSubtype.AGENT_TO_HUMAN:
-            pattern = r"(?P<sender>[\w\s]+) asked the humans: [\"'](?P<message>.*)[\"']"
+            pattern = r"(?P<sender>[\w\s]+) asked the humans: ['\"]*(?P<message>.*)['\"]*$"
+            match = re.search(pattern, event.description)
+            if not match:
+                raise ValueError(f"Could not parse message: {event.description}")
 
-            sender_name, content = re.findall(pattern, event.description)[0]
+            sender_name = match.group("sender").strip()
+            content = match.group("message").strip().strip("'\"")
 
             return cls(
                 content=content,

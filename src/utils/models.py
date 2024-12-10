@@ -24,6 +24,10 @@ def get_chat_model(name: ChatModelName, **kwargs) -> BaseChatModel:
     if "model" in kwargs:
         del kwargs["model"]
 
+    # Set high temperature for more creative and dramatic responses
+    base_kwargs = {"temperature": 0.9}  # Increased from default
+    kwargs = {**base_kwargs, **kwargs}  # Allow kwargs to override base settings
+
     if name == ChatModelName.TURBO:
         return ChatOpenAI(model=name.value, **kwargs)
     elif name == ChatModelName.GPT4:
@@ -49,6 +53,10 @@ class ChatModel:
         backup_model_name: ChatModelName = DEFAULT_FAST_MODEL,
         **kwargs,
     ):
+        # Set high temperature for more creative and dramatic responses
+        base_kwargs = {"temperature": 0.9}  # Increased from default
+        kwargs = {**base_kwargs, **kwargs}  # Allow kwargs to override base settings
+        
         self.defaultModel = get_chat_model(default_model_name, **kwargs)
         self.backupModel = get_chat_model(backup_model_name, **kwargs)
         # Log model initialization at debug level instead of printing

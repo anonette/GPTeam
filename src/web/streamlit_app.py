@@ -2,6 +2,88 @@ import streamlit as st
 import re
 from datetime import datetime
 import pytz
+from elevenlabs import generate, voices, set_api_key
+import os
+import tempfile
+from dotenv import load_dotenv
+import wave
+import io
+import json
+from pathlib import Path
+
+# Load environment variables
+load_dotenv()
+
+# Set Eleven Labs API key from environment
+ELEVEN_LABS_API_KEY = os.getenv('ELEVEN_LABS_API_KEY')
+if ELEVEN_LABS_API_KEY:
+    set_api_key(ELEVEN_LABS_API_KEY)
+
+# Create directory for storing audio files if it doesn't exist
+AUDIO_DIR = Path('src/web/audio')
+AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+
+# Create logs directory if it doesn't exist
+Path('src/web/logs').mkdir(parents=True, exist_ok=True)
+
+# Load agent configuration
+with open('config.json', 'r') as f:
+    config = json.load(f)
+
+# Create agent gender mapping from config
+AGENT_GENDERS = {}
+for agent in config['agents']:
+    name = agent['first_name']
+    # Determine gender from private_bio using pronouns and context
+    bio = agent['private_bio'].lower()
+    if 'she' in bio or 'her' in bio:
+        AGENT_GENDERS[name] = 'female'
+    else:
+        AGENT_GENDERS[name] = 'male'
+
+# Define voice mapping for agents based on gender
+AGENT_VOICES = {
+    # Female voices - warm and empathetic for environmental and human rights themes
+    'female': {
+        'Gaia': 'Rachel',     # Warm, nurturing voice for the environmental activist
+        'Sara Marddini': 'Bella',  # Strong, passionate voice for the human rights activist
+        'default': 'Elli'     # Backup female voice
+    },
+    # Male voices - authoritative and technical for AI/tech themes
+    'male': {
+        'Tata': 'Antoni',     # Professional, technical voice for the AI expert
+        'default': 'Josh'     # Backup male voice
+    }
+}
+
+# Store agent-voice mappings persistently
+VOICE_MAPPING_FILE = AUDIO_DIR / 'voice_mapping.json'
+if VOICE_MAPPING_FILE.exists():
+    with open(VOICE_MAPPING_FILE, 'r') as f:
+        AGENT_TO_VOICE = json.load(f)
+else:
+    AGENT_TO_VOICE = {}
+
+def get_agent_gender(agent_name):
+    """Get agent's gender from config-based mapping"""
+    return AGENT_GENDERS.get(agent_name, 'male')  # Default to male if not found
+
+def assign_voice(agent_name):
+    """Assign a voice to an agent based on their gender and role"""
+    if agent_name in AGENT_TO_VOICE:
+        return AGENT_TO_VOICE[agent_name]
+    
+    gender = get_agent_gender(agent_name)
+    # Get the specific voice for this agent, or use the default for their gender
+    voice = AGENT_VOICES[gender].get(agent_name, AGENT_VOICES[gender]['default'])
+    
+    AGENT_TO_VOICE[agent_name] = voice
+    
+    # Save updated mapping
+    with open(VOICE_MAPPING_FILE, 'w') as f:
+        json.dump(AGENT_TO_VOICE, f)
+    
+    return voice
 
 def parse_log_line(line):
     # Parse log line format: [AgentName] [Color] [Action] Message
@@ -53,15 +135,15 @@ def get_agent_color(agent_name):
     # Define a color palette for agents
     color_map = {
         'Gaia': {
-            'main': '#4CAF50',      # Green
+            'main': '#4CAF50',      # Green for environmental focus
             'light': '#E8F5E9'
         },
-        'Sara': {
-            'main': '#2196F3',      # Blue
+        'Sara Marddini': {
+            'main': '#2196F3',      # Blue for human rights
             'light': '#E3F2FD'
         },
         'Tata': {
-            'main': '#9C27B0',      # Purple
+            'main': '#9C27B0',      # Purple for technology/AI
             'light': '#F3E5F5'
         },
         'default': {
@@ -70,6 +152,68 @@ def get_agent_color(agent_name):
         }
     }
     return color_map.get(agent_name, color_map['default'])
+
+def generate_dialogue_audio(messages):
+    """Generate audio from dialogue messages using Eleven Labs"""
+    if not ELEVEN_LABS_API_KEY:
+        st.error("Eleven Labs API key not found in environment variables.")
+        return None
+    
+    # Create a unique identifier for this dialogue
+    dialogue_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+    audio_path = AUDIO_DIR / f'dialogue_{dialogue_id}.mp3'
+    
+    # Check if this dialogue was already generated
+    if audio_path.exists():
+        return str(audio_path)
+    
+    # Prepare dialogue segments (limit to roughly 3 minutes worth of content)
+    word_count = 0
+    word_limit = 450  # Assuming average speaking rate of 150 words per minute
+    audio_segments = []
+    
+    for msg in messages:
+        # Get word count for this message
+        words_in_message = len(msg['content'].split())
+        
+        if word_count + words_in_message > word_limit:
+            break
+            
+        try:
+            # Get or assign a voice for this agent
+            voice = assign_voice(msg['agent'])
+            
+            # Generate audio for this message
+            audio = generate(
+                text=msg['content'],
+                voice=voice,
+                model="eleven_monolingual_v1"
+            )
+            audio_segments.append(audio)
+            word_count += words_in_message
+            
+            # Add a short pause between messages
+            pause_duration = 0.5  # seconds
+            pause = bytes([128] * int(44100 * pause_duration))  # Generate silence
+            audio_segments.append(pause)
+            
+        except Exception as e:
+            st.error(f"Error generating audio for {msg['agent']}: {str(e)}")
+            continue
+    
+    if not audio_segments:
+        return None
+        
+    # Combine all audio segments and save to file
+    try:
+        with open(audio_path, 'wb') as f:
+            for segment in audio_segments:
+                f.write(segment)
+        return str(audio_path)
+            
+    except Exception as e:
+        st.error(f"Error saving audio file: {str(e)}")
+        return None
 
 def display_message(msg):
     # Determine message alignment and styling
@@ -135,12 +279,46 @@ def display_message(msg):
     # Add spacing between messages
     st.markdown("<div style='margin: 10px 0;'></div>", unsafe_allow_html=True)
 
+def list_saved_dialogues():
+    """List all previously generated dialogue audio files"""
+    audio_files = sorted(AUDIO_DIR.glob('dialogue_*.mp3'), reverse=True)
+    return [f for f in audio_files if f.is_file()]
+
+def format_timestamp(filename):
+    """Format the timestamp from filename"""
+    try:
+        # Extract timestamp from filename (e.g., dialogue_20241210_123456.mp3)
+        timestamp = filename.stem.split('_', 1)[1]  # Get everything after first underscore
+        dt = datetime.strptime(timestamp, "%Y%m%d_%H%M%S")
+        return dt.strftime("%Y-%m-%d %H:%M:%S")
+    except (IndexError, ValueError):
+        return "Unknown time"
+
 def display_chat(messages):
     st.markdown("""
         <h1 style='text-align: center; color: #1a237e; margin-bottom: 2rem;'>
             💬 Agent Dialogue Visualization
         </h1>
     """, unsafe_allow_html=True)
+    
+    # Add Generate Audio button and saved dialogues at the top
+    with st.expander("🎧 Dialogue Audio"):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.button("Generate New 3-Minute Audio"):
+                with st.spinner("Generating audio..."):
+                    audio_file = generate_dialogue_audio(messages)
+                    if audio_file:
+                        st.audio(audio_file)
+        
+        with col2:
+            st.write("Previously Generated Dialogues:")
+            saved_dialogues = list_saved_dialogues()
+            for audio_file in saved_dialogues:
+                formatted_time = format_timestamp(audio_file)
+                st.audio(str(audio_file), format='audio/mp3')
+                st.caption(f"Generated at: {formatted_time}")
     
     # Initialize session state for message counter if not exists
     if 'message_index' not in st.session_state:
