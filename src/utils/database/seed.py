@@ -46,7 +46,10 @@ agents = [
         "authorized_tools": [],
         "ordered_plan_ids": [seed_uuid(f"agent-{agent.id}-initial-plan")],
         "world_id": config.world_id,
-        "location_id": random.choice(locations)["id"],
+        "location_id": next(
+            (loc["id"] for loc in locations if loc["name"] == agent.initial_plan["location"]),
+            locations[0]["id"]
+        ),
         "discord_bot_token": os.environ.get(
             f"{agent.first_name.upper()}_DISCORD_TOKEN", None
         ),
@@ -61,9 +64,12 @@ if DISCORD_ENABLED:
                 f"Could not find discord bot token for agent {agent['full_name']}"
             )
 
-# For now, allow all agents in all locations
+# Only allow agents in their initial location
 for location in locations:
-    location["allowed_agent_ids"] = [agent["id"] for agent in agents]
+    location["allowed_agent_ids"] = [
+        agent["id"] for agent in agents 
+        if agent["location_id"] == location["id"]
+    ]
 
 
 def get_agent_initial_plan(agent: AgentConfig):
