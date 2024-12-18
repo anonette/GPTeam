@@ -12,6 +12,14 @@ def get_base_locations() -> Tuple[str, str]:
     base_url = "https://teamfiles.zrok.yair.cc"
     return base_path, base_url
 
+def get_agent_log_url(agent_name: str) -> str:
+    """Get the URL for an agent's raw log file."""
+    base_path, base_url = get_base_locations()
+    if st.runtime.exists():
+        return f"{base_url}/agents/{agent_name}.txt"
+    else:
+        return os.path.join(base_path, "agents", f"{agent_name}.txt")
+
 def read_file_content(filepath: str, is_remote: bool = False) -> str:
     """Read file content from local path or remote URL."""
     try:
@@ -163,7 +171,38 @@ def filter_messages(messages: List[Dict], selected_speakers: Set[str]) -> List[D
 def display_debate():
     st.title("AI Apocalypse Club Debate")
     
-    # Add audio player section at the top
+    # Add raw logs section at the top
+    st.header("📄 Raw Agent Logs")
+    st.markdown("""
+        <div style='background-color: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 20px;'>
+            Access the raw conversation logs for each agent:
+        </div>
+    """, unsafe_allow_html=True)
+    
+    # Create columns for agent log links
+    log_cols = st.columns(3)
+    agents = ['Tata', 'Gaia', 'Sara']
+    
+    for idx, agent in enumerate(agents):
+        with log_cols[idx]:
+            log_url = get_agent_log_url(agent)
+            st.markdown(f"""
+                <div style='text-align: center;'>
+                    <a href="{log_url}" target="_blank" style='
+                        display: inline-block;
+                        padding: 10px 20px;
+                        background-color: #f0f0f0;
+                        border-radius: 5px;
+                        text-decoration: none;
+                        color: #333;
+                        border: 1px solid #ddd;
+                    '>
+                        📝 {agent}'s Log
+                    </a>
+                </div>
+            """, unsafe_allow_html=True)
+    
+    # Add audio player section
     st.header("🎧 Listen to Sample Debate")
     st.markdown("""
         <div style='background-color: #f0f8ff; padding: 15px; border-radius: 10px; margin-bottom: 20px;'>
