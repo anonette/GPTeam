@@ -171,6 +171,19 @@ def filter_messages(messages: List[Dict], selected_speakers: Set[str]) -> List[D
 def display_debate():
     st.title("AI Apocalypse Club Debate")
     
+    # Add GitHub repository link
+    st.markdown("""
+        <div style='background-color: #f0f0f0; padding: 15px; border-radius: 10px; margin-bottom: 20px;'>
+            <h3 style='margin: 0;'>📚 Project Repository</h3>
+            <p style='margin: 10px 0 0 0;'>
+                View the source code on GitHub: 
+                <a href='https://github.com/anonette/GPTeam/tree/dknewversion' target='_blank'>
+                    GPTeam Repository
+                </a>
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+    
     # Add raw logs section at the top
     st.header("📄 Raw Agent Logs")
     st.markdown("""
