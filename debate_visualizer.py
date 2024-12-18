@@ -221,9 +221,9 @@ def display_debate():
         <div style='background-color: #f0f8ff; padding: 15px; border-radius: 10px; margin-bottom: 20px;'>
             Listen to a sample of the debate with distinct voices for each agent:
             <ul>
-                <li>Tata: Male, AI-like voice</li>
-                <li>Gaia: Female, warm voice</li>
-                <li>Sara: Female, professional voice</li>
+                <li>Tata: AI safety advocate emphasizing responsible AI development as a solution to global challenges</li>
+                <li>Gaia: Environmental advocate fighting for Earth's preservation and sustainable future</li>
+                <li>Sara: Human rights advocate focusing on immediate social justice and equality</li>
             </ul>
         </div>
     """, unsafe_allow_html=True)
