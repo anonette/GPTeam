@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 from datetime import datetime
 from typing import List, Dict, Set, Tuple
+import requests
 
 def get_base_locations() -> Tuple[str, str]:
     """Get the base path and url depending on environment (local or Streamlit Cloud)."""
@@ -11,11 +12,26 @@ def get_base_locations() -> Tuple[str, str]:
     base_url = "https://teamfiles.zrok.yair.cc"
     return base_path, base_url
 
-def parse_agent_file(filepath: str) -> List[Dict]:
+def read_file_content(filepath: str, is_remote: bool = False) -> str:
+    """Read file content from local path or remote URL."""
+    try:
+        if is_remote:
+            response = requests.get(filepath)
+            response.raise_for_status()
+            return response.text
+        else:
+            with open(filepath, 'r') as f:
+                return f.read()
+    except Exception as e:
+        st.error(f"Error reading file {filepath}: {str(e)}")
+        return ""
+
+def parse_agent_file(filepath: str, is_remote: bool = False) -> List[Dict]:
     """Parse an agent file and extract messages."""
     try:
-        with open(filepath, 'r') as f:
-            content = f.read()
+        content = read_file_content(filepath, is_remote)
+        if not content:
+            return []
             
         # Find all messages in the Current Conversations section
         conversation_match = re.search(r'Current Conversations:\n(.*?)\n\nCurrent Plans:', content, re.DOTALL)
@@ -91,18 +107,29 @@ def get_all_messages() -> List[Dict]:
     """Get messages from all agent files and combine them."""
     all_messages = []
     seen_messages = set()  # Track unique messages across all files
-    base_path, _ = get_base_locations()
-    agents_path = os.path.join(base_path, "agents")
     
-    agent_files = [
-        os.path.join(agents_path, "Tata.txt"),
-        os.path.join(agents_path, "Gaia.txt"),
-        os.path.join(agents_path, "Sara.txt")
-    ]
+    # Get base locations
+    base_path, base_url = get_base_locations()
+    is_remote = st.runtime.exists()
+    
+    # Set up file paths based on environment
+    if is_remote:
+        agent_files = [
+            f"{base_url}/agents/Tata.txt",
+            f"{base_url}/agents/Gaia.txt",
+            f"{base_url}/agents/Sara.txt"
+        ]
+    else:
+        agents_path = os.path.join(base_path, "agents")
+        agent_files = [
+            os.path.join(agents_path, "Tata.txt"),
+            os.path.join(agents_path, "Gaia.txt"),
+            os.path.join(agents_path, "Sara.txt")
+        ]
     
     # First collect all messages
     for filepath in agent_files:
-        all_messages.extend(parse_agent_file(filepath))
+        all_messages.extend(parse_agent_file(filepath, is_remote))
     
     # Sort by timestamp first
     all_messages.sort(key=lambda x: x['timestamp'])
