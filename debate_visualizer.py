@@ -3,7 +3,13 @@ import re
 import os
 from pathlib import Path
 from datetime import datetime
-from typing import List, Dict, Set
+from typing import List, Dict, Set, Tuple
+
+def get_base_locations() -> Tuple[str, str]:
+    """Get the base path and url depending on environment (local or Streamlit Cloud)."""
+    base_path = os.getcwd()
+    base_url = "https://teamfiles.zrok.yair.cc"
+    return base_path, base_url
 
 def parse_agent_file(filepath: str) -> List[Dict]:
     """Parse an agent file and extract messages."""
@@ -85,12 +91,13 @@ def get_all_messages() -> List[Dict]:
     """Get messages from all agent files and combine them."""
     all_messages = []
     seen_messages = set()  # Track unique messages across all files
-    base_path = os.path.join(os.getcwd(), "agents")
+    base_path, _ = get_base_locations()
+    agents_path = os.path.join(base_path, "agents")
     
     agent_files = [
-        os.path.join(base_path, "Tata.txt"),
-        os.path.join(base_path, "Gaia.txt"),
-        os.path.join(base_path, "Sara.txt")
+        os.path.join(agents_path, "Tata.txt"),
+        os.path.join(agents_path, "Gaia.txt"),
+        os.path.join(agents_path, "Sara.txt")
     ]
     
     # First collect all messages
@@ -142,8 +149,18 @@ def display_debate():
         </div>
     """, unsafe_allow_html=True)
     
-    sample_audio_url = "https://teamfiles.zrok.yair.cc/sound/debate_speech_20241218_134139.mp3"
-    st.audio(sample_audio_url, format='audio/mp3')
+    # Get base locations
+    base_path, base_url = get_base_locations()
+    
+    # Set audio path based on environment
+    if st.runtime.exists():
+        # When deployed on Streamlit Cloud, use base_url
+        audio_url = f"{base_url}/sound/debate_speech_20241218_134139.mp3"
+    else:
+        # When running locally, use base_path
+        audio_url = os.path.join(base_path, "output", "debate_speech.mp3")
+    
+    st.audio(audio_url, format='audio/mp3')
     
     # Color coding for different speakers
     colors = {
