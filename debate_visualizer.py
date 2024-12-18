@@ -129,6 +129,22 @@ def filter_messages(messages: List[Dict], selected_speakers: Set[str]) -> List[D
 def display_debate():
     st.title("AI Apocalypse Club Debate")
     
+    # Add audio player section at the top
+    st.header("🎧 Listen to Sample Debate")
+    st.markdown("""
+        <div style='background-color: #f0f8ff; padding: 15px; border-radius: 10px; margin-bottom: 20px;'>
+            Listen to a sample of the debate with distinct voices for each agent:
+            <ul>
+                <li>Tata: Male, AI-like voice</li>
+                <li>Gaia: Female, warm voice</li>
+                <li>Sara: Female, professional voice</li>
+            </ul>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    sample_audio_url = "https://teamfiles.zrok.yair.cc/sound/debate_speech_20241218_134139.mp3"
+    st.audio(sample_audio_url, format='audio/mp3')
+    
     # Color coding for different speakers
     colors = {
         'Tata': {
@@ -213,6 +229,38 @@ def display_debate():
     # Ensure message_index is valid for filtered messages
     st.session_state.message_index = min(st.session_state.message_index, len(messages) - 1)
     
+    # Container for messages with max width
+    st.markdown("""
+        <style>
+            .message-container {
+                max-width: 800px;
+                margin: 0 auto;
+            }
+            .message-header {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 10px;
+            }
+            .message-timestamp {
+                color: #666;
+                font-size: 0.9em;
+            }
+            .message-content {
+                line-height: 1.6;
+                font-size: 1.1em;
+            }
+            .message-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                padding: 5px 15px;
+                border-radius: 20px;
+                font-size: 0.9em;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+    
     # Show messages up to current index
     for i in range(st.session_state.message_index + 1):
         message = messages[i]
@@ -224,54 +272,39 @@ def display_debate():
         })
         
         st.markdown(f"""
-            <div style='
-                background-color: {speaker_info['bg']};
-                border: 2px solid {speaker_info['border']};
-                padding: 20px;
-                border-radius: 10px;
-                margin: 20px 0;
-            '>
-                <div style='color: #666; margin-bottom: 10px;'>{message['timestamp']}</div>
+            <div class='message-container'>
                 <div style='
-                    display: flex;
-                    align-items: center;
-                    background-color: rgba(255,255,255,0.7);
-                    padding: 10px;
-                    border-radius: 5px;
-                    margin-bottom: 15px;
-                    gap: 10px;
-                '>
-                    <div style='
-                        background-color: {speaker_info['bg']};
-                        border: 2px solid {speaker_info['border']};
-                        padding: 5px 15px;
-                        border-radius: 20px;
-                        display: inline-flex;
-                        align-items: center;
-                        gap: 5px;
-                    '>
-                        {speaker_info['icon']} <strong>{message['speaker']}</strong>
-                    </div>
-                    <div style='color: #666;'>responding to</div>
-                    <div style='
-                        background-color: {recipient_info['bg']};
-                        border: 2px solid {recipient_info['border']};
-                        padding: 5px 15px;
-                        border-radius: 20px;
-                        display: inline-flex;
-                        align-items: center;
-                        gap: 5px;
-                    '>
-                        {recipient_info['icon']} <strong>{message['recipient']}</strong>
-                    </div>
-                </div>
-                <div style='
-                    background-color: white;
+                    background-color: {speaker_info['bg']};
+                    border: 2px solid {speaker_info['border']};
                     padding: 15px;
-                    border-radius: 5px;
-                    border: 1px solid rgba(0,0,0,0.1);
+                    border-radius: 10px;
+                    margin: 15px 0;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
                 '>
-                    {message['message']}
+                    <div class='message-header'>
+                        <div class='message-badge' style='
+                            background-color: {speaker_info['bg']};
+                            border: 2px solid {speaker_info['border']};
+                        '>
+                            {speaker_info['icon']} <strong>{message['speaker']}</strong>
+                        </div>
+                        <span style='color: #666;'>→</span>
+                        <div class='message-badge' style='
+                            background-color: {recipient_info['bg']};
+                            border: 2px solid {recipient_info['border']};
+                        '>
+                            {recipient_info['icon']} <strong>{message['recipient']}</strong>
+                        </div>
+                        <span class='message-timestamp'>{message['timestamp']}</span>
+                    </div>
+                    <div class='message-content' style='
+                        background-color: white;
+                        padding: 15px;
+                        border-radius: 5px;
+                        border: 1px solid rgba(0,0,0,0.1);
+                    '>
+                        {message['message']}
+                    </div>
                 </div>
             </div>
         """, unsafe_allow_html=True)
@@ -280,17 +313,23 @@ def display_debate():
     st.markdown(f"""
         <div style='
             text-align: center;
-            margin: 20px 0;
+            margin: 20px auto;
             padding: 10px;
             background-color: #f0f0f0;
             border-radius: 5px;
+            max-width: 800px;
         '>
             Showing messages 1-{st.session_state.message_index + 1} of {len(messages)}
             {f" between {' and '.join(st.session_state.selected_speakers)}" if st.session_state.selected_speakers else ""}
         </div>
     """, unsafe_allow_html=True)
     
-    # Navigation buttons
+    # Navigation buttons in container
+    st.markdown("""
+        <div style='max-width: 800px; margin: 0 auto;'>
+            <div style='display: flex; justify-content: space-between;'>
+    """, unsafe_allow_html=True)
+    
     col1, col2 = st.columns(2)
     
     # Previous button
@@ -304,6 +343,8 @@ def display_debate():
         if col2.button("Show More →"):
             st.session_state.message_index += 1
             st.rerun()
+            
+    st.markdown("</div></div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     st.set_page_config(
